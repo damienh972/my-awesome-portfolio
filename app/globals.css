@@ -1,26 +1,135 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Sora';
+  src: url('/fonts/sora/Sora-ExtraLight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Michroma';
+  src: url('/fonts/michroma/Michroma-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #000000;
+  --foreground: #ffffff;
+  --neon-blue: #00d9ff;
+  --neon-purple: #b026ff;
+  --neon-pink: #ff006e;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    font-size: 14px;
+    scroll-behavior: smooth;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  body {
+    background-color: #000000;
+    color: #ffffff;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Texts */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-neon-blue {
+    color: #00d9ff;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.6),
+                 0 0 20px rgba(0, 217, 255, 0.4),
+                 0 0 30px rgba(0, 217, 255, 0.2);
+  }
+
+  .text-neon-purple {
+    color: #b026ff;
+    text-shadow: 0 0 10px rgba(176, 38, 255, 0.6),
+                 0 0 20px rgba(176, 38, 255, 0.4),
+                 0 0 30px rgba(176, 38, 255, 0.2);
+  }
+
+  .text-neon-pink {
+    color: #ff006e;
+    text-shadow: 0 0 10px rgba(255, 0, 110, 0.6),
+                 0 0 20px rgba(255, 0, 110, 0.4),
+                 0 0 30px rgba(255, 0, 110, 0.2);
+  }
+
+  .text-gradient {
+    background: linear-gradient(to right, #00d9ff, #b026ff, #ff006e);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-gradient-animated {
+    background: linear-gradient(90deg,
+      #00d9ff 0%,
+      #b026ff 33%,
+      #ff006e 66%,
+      #00d9ff 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradient-shift 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.5))
+            drop-shadow(0 0 15px rgba(176, 38, 255, 0.3));
+  }
+
+  /* Glow Effects */
+  .glow-blue {
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5),
+                 0 0 20px rgba(0, 217, 255, 0.3),
+                 0 0 30px rgba(0, 217, 255, 0.2);
+  }
+
+  .glow-purple {
+    text-shadow: 0 0 10px rgba(176, 38, 255, 0.5),
+                 0 0 20px rgba(176, 38, 255, 0.3),
+                 0 0 30px rgba(176, 38, 255, 0.2);
+  }
+
+  .glow-pink {
+    text-shadow: 0 0 10px rgba(255, 0, 110, 0.5),
+                 0 0 20px rgba(255, 0, 110, 0.3),
+                 0 0 30px rgba(255, 0, 110, 0.2);
+  }
+
+  .glow-box {
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.3),
+                0 0 30px rgba(176, 38, 255, 0.2);
+  }
+}
+
+/* Animations */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
