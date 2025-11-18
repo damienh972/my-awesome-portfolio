@@ -1,15 +1,20 @@
 import { Hero } from "@/components/Hero";
+import { BackgroundWrapper } from "@/components/3D/BackgroundWrapper";
 
 export default function Home() {
   return (
     <main className="relative">
-      <Hero />
-      <section className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-4xl font-bold text-white mb-4">Next Section</h2>
-          <p className="text-gray-400">Blockchain section coming soon...</p>
-        </div>
-      </section>
+      <BackgroundWrapper />
+      <div className="relative z-10">
+        <Hero />
+        <section className="h-screen flex items-center justify-center bg-gray-900 text-white">
+          <h2 className="text-4xl">Blockchain Section</h2>
+        </section>
+        <section className="h-screen flex items-center justify-center bg-gray-800 text-white">
+          <h2 className="text-4xl">Next Section</h2>
+        </section>
+      </div>
+      
     </main>
   );
 }

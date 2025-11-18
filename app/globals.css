@@ -30,6 +30,12 @@
   html {
     font-size: 14px;
     scroll-behavior: smooth;
+    scroll-snap-type: y proximity;
+  }
+
+  section {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
   }
 
   ::-webkit-scrollbar {
@@ -42,14 +48,26 @@
     }
   }
 
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+
+    * {
+      scroll-padding-top: 2rem;
+    }
+  }
+
   body {
     background-color: #000000;
     color: #ffffff;
+    overscroll-behavior-y: none;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer utilities {
+
   /* Texts */
   .text-balance {
     text-wrap: balance;
@@ -58,22 +76,22 @@
   .text-neon-blue {
     color: #00d9ff;
     text-shadow: 0 0 10px rgba(0, 217, 255, 0.6),
-                 0 0 20px rgba(0, 217, 255, 0.4),
-                 0 0 30px rgba(0, 217, 255, 0.2);
+      0 0 20px rgba(0, 217, 255, 0.4),
+      0 0 30px rgba(0, 217, 255, 0.2);
   }
 
   .text-neon-purple {
     color: #b026ff;
     text-shadow: 0 0 10px rgba(176, 38, 255, 0.6),
-                 0 0 20px rgba(176, 38, 255, 0.4),
-                 0 0 30px rgba(176, 38, 255, 0.2);
+      0 0 20px rgba(176, 38, 255, 0.4),
+      0 0 30px rgba(176, 38, 255, 0.2);
   }
 
   .text-neon-pink {
     color: #ff006e;
     text-shadow: 0 0 10px rgba(255, 0, 110, 0.6),
-                 0 0 20px rgba(255, 0, 110, 0.4),
-                 0 0 30px rgba(255, 0, 110, 0.2);
+      0 0 20px rgba(255, 0, 110, 0.4),
+      0 0 30px rgba(255, 0, 110, 0.2);
   }
 
   .text-gradient {
@@ -85,50 +103,59 @@
 
   .text-gradient-animated {
     background: linear-gradient(90deg,
-      #00d9ff 0%,
-      #b026ff 33%,
-      #ff006e 66%,
-      #00d9ff 100%
-    );
+        #00d9ff 0%,
+        #b026ff 33%,
+        #ff006e 66%,
+        #00d9ff 100%);
     background-size: 200% auto;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     animation: gradient-shift 3s ease-in-out infinite;
-    filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.5))
-            drop-shadow(0 0 15px rgba(176, 38, 255, 0.3));
+    filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.5)) drop-shadow(0 0 15px rgba(176, 38, 255, 0.3));
   }
 
   /* Glow Effects */
   .glow-blue {
     text-shadow: 0 0 10px rgba(0, 217, 255, 0.5),
-                 0 0 20px rgba(0, 217, 255, 0.3),
-                 0 0 30px rgba(0, 217, 255, 0.2);
+      0 0 20px rgba(0, 217, 255, 0.3),
+      0 0 30px rgba(0, 217, 255, 0.2);
   }
 
   .glow-purple {
     text-shadow: 0 0 10px rgba(176, 38, 255, 0.5),
-                 0 0 20px rgba(176, 38, 255, 0.3),
-                 0 0 30px rgba(176, 38, 255, 0.2);
+      0 0 20px rgba(176, 38, 255, 0.3),
+      0 0 30px rgba(176, 38, 255, 0.2);
   }
 
   .glow-pink {
     text-shadow: 0 0 10px rgba(255, 0, 110, 0.5),
-                 0 0 20px rgba(255, 0, 110, 0.3),
-                 0 0 30px rgba(255, 0, 110, 0.2);
+      0 0 20px rgba(255, 0, 110, 0.3),
+      0 0 30px rgba(255, 0, 110, 0.2);
   }
 
   .glow-box {
     box-shadow: 0 0 15px rgba(0, 217, 255, 0.3),
-                0 0 30px rgba(176, 38, 255, 0.2);
+      0 0 30px rgba(176, 38, 255, 0.2);
+  }
+
+  .gradient-ethereum {
+    background: linear-gradient(135deg,
+        #8B7FBF 0%,
+        #B8AED8 33%,
+        #C2E8E5 66%,
+        #D4C5F0 100%);
   }
 }
 
 /* Animations */
 @keyframes gradient-shift {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
