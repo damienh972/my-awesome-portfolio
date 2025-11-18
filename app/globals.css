@@ -30,12 +30,10 @@
   html {
     font-size: 14px;
     scroll-behavior: smooth;
-    scroll-snap-type: y proximity;
   }
 
   section {
-    scroll-snap-align: start;
-    scroll-snap-stop: normal;
+    min-height: 100vh;
   }
 
   ::-webkit-scrollbar {

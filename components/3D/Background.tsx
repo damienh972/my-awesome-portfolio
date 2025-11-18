@@ -1,39 +1,25 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useRef } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { PolyhedronOrb } from "./PolyhedronOrb";
 
-interface Scene3DBackgroundProps {
+interface BackgroundProps {
   scrollProgress: number;
   currentSection: number;
 }
 
-export function Background({
-  scrollProgress,
-  currentSection,
-}: Scene3DBackgroundProps) {
-  const getBackgroundGradient = () => {
-    if (currentSection === 0) {
-      const t = Math.min(1, scrollProgress);
-      const topR = 1 + (11 - 1) * t;
-      const topG = 1 + (9 - 1) * t;
-      const topB = 23 + (48 - 23) * t;
-      const bottomR = 11 + (31 - 11) * t;
-      const bottomG = 9 + (24 - 9) * t;
-      const bottomB = 48 + (70 - 48) * t;
+export function Background({ scrollProgress, currentSection }: BackgroundProps) {
+  const [bgGradient, setBgGradient] = useState('linear-gradient(to bottom, rgb(1, 1, 23), rgb(11, 9, 48))');
 
-      return `linear-gradient(to bottom, rgb(${topR}, ${topG}, ${topB}), rgb(${bottomR}, ${bottomG}, ${bottomB}))`;
-    } else if (currentSection === 1) {
-      return 'linear-gradient(to bottom, rgb(11, 9, 48), rgb(31, 24, 70))';
-    }
-    return 'linear-gradient(to bottom, rgb(1, 1, 23), rgb(11, 9, 48))';
-  };
+  useEffect(() => {
+    updateBackground(currentSection, scrollProgress, setBgGradient);
+  }, [currentSection, scrollProgress]);
 
   return (
-    <div className="fixed inset-0 -z-10 w-full h-full" style={{ background: getBackgroundGradient() }}>
+    <div className="fixed inset-0 -z-10 w-full h-full" style={{ background: bgGradient }}>
       <Canvas
         camera={{ position: [0, 0, 8], fov: 75 }}
         gl={{
@@ -44,10 +30,7 @@ export function Background({
         style={{ width: '100%', height: '100%' }}
       >
         <Suspense fallback={null}>
-          <Scene3DContent
-            scrollProgress={scrollProgress}
-            currentSection={currentSection}
-          />
+          <Scene3DContent scrollProgress={scrollProgress} currentSection={currentSection} />
         </Suspense>
       </Canvas>
     </div>
@@ -60,24 +43,21 @@ interface Scene3DContentProps {
 }
 
 function Scene3DContent({ scrollProgress, currentSection }: Scene3DContentProps) {
-  const cameraRef = useRef<THREE.Camera>(null!);
-
   useFrame((state) => {
-    cameraRef.current = state.camera;
-
+    // Camera animation based on scroll
     const targetPosition = getCameraPosition(scrollProgress, currentSection);
     const targetLookAt = getCameraLookAt(scrollProgress, currentSection);
 
     state.camera.position.lerp(
       new THREE.Vector3(...targetPosition),
-      0.05
+      0.1
     );
 
     const lookAtTarget = new THREE.Vector3(...targetLookAt);
     const currentLookAt = new THREE.Vector3();
     state.camera.getWorldDirection(currentLookAt);
     currentLookAt.add(state.camera.position);
-    currentLookAt.lerp(lookAtTarget, 0.05);
+    currentLookAt.lerp(lookAtTarget, 0.1);
     state.camera.lookAt(currentLookAt);
   });
 
@@ -97,10 +77,26 @@ function Scene3DContent({ scrollProgress, currentSection }: Scene3DContentProps)
           transitionProgress={currentSection === 0 ? heroToBlockchainProgress : 1}
         />
       )}
-
-      {/* <GridBackground opacity={0.1} /> */}
     </>
   );
+}
+
+function updateBackground(section: number, progress: number, setBgGradient: (gradient: string) => void) {
+  if (section === 0) {
+    const t = Math.min(1, progress);
+    const topR = 1 + (11 - 1) * t;
+    const topG = 1 + (9 - 1) * t;
+    const topB = 23 + (48 - 23) * t;
+    const bottomR = 11 + (31 - 11) * t;
+    const bottomG = 9 + (24 - 9) * t;
+    const bottomB = 48 + (70 - 48) * t;
+
+    setBgGradient(`linear-gradient(to bottom, rgb(${topR}, ${topG}, ${topB}), rgb(${bottomR}, ${bottomG}, ${bottomB}))`);
+  } else if (section === 1) {
+    setBgGradient('linear-gradient(to bottom, rgb(11, 9, 48), rgb(31, 24, 70))');
+  } else {
+    setBgGradient('linear-gradient(to bottom, rgb(1, 1, 23), rgb(11, 9, 48))');
+  }
 }
 
 function getCameraPosition(
@@ -109,12 +105,18 @@ function getCameraPosition(
 ): [number, number, number] {
   switch (section) {
     case 0:
-      return [0, 0, 8];
-    case 1:
+      // Mouvement subtil pendant le scroll du Hero
       return [
-        progress * 3,
-        progress * -1,
-        8 - progress * 3,
+        progress * 0.5,
+        progress * -0.3,
+        8 - progress * 0.5,
+      ];
+    case 1:
+      // Mouvement plus prononcé dans la section Blockchain
+      return [
+        0.5 + progress * 2.5,
+        -0.3 + progress * -0.7,
+        7.5 - progress * 2.5,
       ];
     default:
       return [0, 0, 8];
@@ -127,9 +129,11 @@ function getCameraLookAt(
 ): [number, number, number] {
   switch (section) {
     case 0:
-      return [0, 0, 0];
+      // La caméra commence à regarder légèrement vers le bas
+      return [0, progress * -0.5, 0];
     case 1:
-      return [0, -progress * 2, 0];
+      // Continue de regarder vers le bas
+      return [0, -0.5 + progress * -1.5, 0];
     default:
       return [0, 0, 0];
   }

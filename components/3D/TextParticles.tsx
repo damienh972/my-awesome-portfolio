@@ -73,8 +73,8 @@ export function TextParticles({ text, font="Arial", mousePosition, isHovered, mo
     const sampledPos: number[] = [];
     const sampledColors: number[] = [];
 
-    const sampling = isMobile ? 4 : 3; // Moins de particules sur mobile pour la performance
-    const scale = isMobile ? 100 : isTablet ? 90 : 80; // Échelle adaptative
+    const sampling = isMobile ? 4 : 3;
+    const scale = isMobile ? 100 : isTablet ? 90 : 80;
 
     for (let y = 0; y < canvas.height; y += sampling) {
       for (let x = 0; x < canvas.width; x += sampling) {
