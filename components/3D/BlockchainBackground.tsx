@@ -23,7 +23,6 @@ function createSeededRandom(seed: number) {
 }
 
 export function BlockchainBackground({ scrollRef, currentSection }: Props) {
-
   const groupRef = useRef<THREE.Group>(null);
   const nodesRef = useRef<THREE.InstancedMesh>(null);
   const cablesRef = useRef<THREE.InstancedMesh>(null);
@@ -82,9 +81,10 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
   useFrame((state, delta) => {
     if (!groupRef.current || !packetsRef.current) return;
 
-    groupRef.current.rotation.y += 0.1 * delta;
+    groupRef.current.rotation.y += 0.0015;
+
     const targetRotX = (pointer.y * 0.2) || 0;
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetRotX, delta * 2);
+    groupRef.current.rotation.x += (targetRotX - groupRef.current.rotation.x) * 0.05;
 
     const scrollProgress = scrollRef.current || 0;
     const targetPos = new THREE.Vector3();
@@ -100,11 +100,12 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
     if (currentSection === 0 && scrollProgress === 0 && groupRef.current.position.y === 0) {
       groupRef.current.position.set(0, -50, -60);
     } else {
-      const dampFactor = 1 - Math.exp(-5 * delta);
-      groupRef.current.position.lerp(targetPos, dampFactor);
+      groupRef.current.position.lerp(targetPos, 0.05);
     }
 
+    const safeDelta = Math.min(delta, 0.05);
     let dirty = false;
+
     packetsData.current.forEach((packet, i) => {
       if (!packet.active) {
         if (Math.random() < 0.2) {
@@ -121,7 +122,7 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
         }
       }
 
-      packet.progress += packet.speed * delta;
+      packet.progress += packet.speed * safeDelta;
 
       if (packet.progress >= 1) {
         packet.active = false;
