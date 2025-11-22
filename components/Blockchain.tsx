@@ -10,7 +10,7 @@ export function Blockchain() {
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ["start end", "end start"]
+    offset: ["start end", "end start"],
   });
 
   const [quizScrollProgress, setQuizScrollProgress] = useState(0);
@@ -31,18 +31,18 @@ export function Blockchain() {
     <section
       ref={sectionRef}
       className="flex items-center justify-center text-white"
-      style={{ height: '200vh', zIndex: 2, position: 'relative' }}
+      style={{ height: "200vh", zIndex: 2, position: "relative" }}
     >
       {isInView && (
         <div
           className="pointer-events-auto"
           style={{
-            position: 'absolute',
-            top: '50%',
-            left: '80%',
-            transform: 'translate(-50%, -50%)',
-            width: '600px',
-            height: '500px'
+            position: "absolute",
+            top: "50%",
+            left: "80%",
+            transform: "translate(-50%, -50%)",
+            width: "600px",
+            height: "500px",
           }}
         >
           <Canvas
@@ -50,8 +50,16 @@ export function Blockchain() {
             gl={{ alpha: true, antialias: true }}
           >
             <ambientLight intensity={0.5} />
-            <directionalLight position={[5, 5, 5]} intensity={0.8} color="#00d9ff" />
-            <pointLight position={[-5, -5, 5]} intensity={0.5} color="#a855f7" />
+            <directionalLight
+              position={[5, 5, 5]}
+              intensity={0.8}
+              color="#00d9ff"
+            />
+            <pointLight
+              position={[-5, -5, 5]}
+              intensity={0.5}
+              color="#a855f7"
+            />
           </Canvas>
         </div>
       )}

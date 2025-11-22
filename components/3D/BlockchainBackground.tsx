@@ -35,7 +35,13 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
     const rng = createSeededRandom(42);
     const _nodes = [];
     for (let i = 0; i < NODE_COUNT; i++) {
-      _nodes.push(new THREE.Vector3((rng() - 0.5) * 40, (rng() - 0.5) * 30, (rng() - 0.5) * 20));
+      _nodes.push(
+        new THREE.Vector3(
+          (rng() - 0.5) * 40,
+          (rng() - 0.5) * 30,
+          (rng() - 0.5) * 20
+        )
+      );
     }
     const _connections = [];
     for (let i = 0; i < NODE_COUNT; i++) {
@@ -62,7 +68,10 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
       connections.forEach((conn, i) => {
         const dist = conn.start.distanceTo(conn.end);
         dummy.position.copy(conn.start).add(conn.end).multiplyScalar(0.5);
-        dummy.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3().subVectors(conn.end, conn.start).normalize());
+        dummy.quaternion.setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          new THREE.Vector3().subVectors(conn.end, conn.start).normalize()
+        );
         dummy.scale.set(1, dist, 1);
         dummy.updateMatrix();
         cablesRef.current!.setMatrixAt(i, dummy.matrix);
@@ -71,20 +80,23 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
     }
   }, [nodes, connections, dummy]);
 
-  const packetsData = useRef(Array.from({ length: PACKET_COUNT }).map((_, i) => ({
-    active: i < 15,
-    progress: Math.random(),
-    routeIndex: Math.floor(Math.random() * connections.length),
-    speed: 0.5 + Math.random() * 0.5
-  })));
+  const packetsData = useRef(
+    Array.from({ length: PACKET_COUNT }).map((_, i) => ({
+      active: i < 15,
+      progress: Math.random(),
+      routeIndex: Math.floor(Math.random() * connections.length),
+      speed: 0.5 + Math.random() * 0.5,
+    }))
+  );
 
   useFrame((state, delta) => {
     if (!groupRef.current || !packetsRef.current) return;
 
     groupRef.current.rotation.y += 0.0015;
 
-    const targetRotX = (pointer.y * 0.2) || 0;
-    groupRef.current.rotation.x += (targetRotX - groupRef.current.rotation.x) * 0.05;
+    const targetRotX = pointer.y * 0.2 || 0;
+    groupRef.current.rotation.x +=
+      (targetRotX - groupRef.current.rotation.x) * 0.05;
 
     const scrollProgress = scrollRef.current || 0;
     const targetPos = new THREE.Vector3();
@@ -94,10 +106,18 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
     } else {
       const t = Math.min(1, scrollProgress * 2);
       const ease = t * (2 - t);
-      targetPos.set(0, THREE.MathUtils.lerp(-50, 0, ease), THREE.MathUtils.lerp(-60, -12, ease));
+      targetPos.set(
+        0,
+        THREE.MathUtils.lerp(-50, 0, ease),
+        THREE.MathUtils.lerp(-60, -12, ease)
+      );
     }
 
-    if (currentSection === 0 && scrollProgress === 0 && groupRef.current.position.y === 0) {
+    if (
+      currentSection === 0 &&
+      scrollProgress === 0 &&
+      groupRef.current.position.y === 0
+    ) {
       groupRef.current.position.set(0, -50, -60);
     } else {
       groupRef.current.position.lerp(targetPos, 0.05);
@@ -150,15 +170,33 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
     <group ref={groupRef} position={[0, -50, -60]}>
       <instancedMesh ref={nodesRef} args={[undefined, undefined, NODE_COUNT]}>
         <sphereGeometry args={[0.8, 32, 32]} />
-        <meshStandardMaterial color="#334155" roughness={0.2} metalness={0.9} emissive="#1e1b4b" emissiveIntensity={0.2} />
+        <meshStandardMaterial
+          color="#334155"
+          roughness={0.2}
+          metalness={0.9}
+          emissive="#1e1b4b"
+          emissiveIntensity={0.2}
+        />
       </instancedMesh>
 
-      <instancedMesh ref={cablesRef} args={[undefined, undefined, connections.length]}>
+      <instancedMesh
+        ref={cablesRef}
+        args={[undefined, undefined, connections.length]}
+      >
         <cylinderGeometry args={[0.03, 0.03, 1, 4]} />
-        <meshBasicMaterial color="#475569" transparent opacity={0.2} blending={THREE.AdditiveBlending} />
+        <meshBasicMaterial
+          color="#475569"
+          transparent
+          opacity={0.2}
+          blending={THREE.AdditiveBlending}
+        />
       </instancedMesh>
 
-      <instancedMesh ref={packetsRef} args={[undefined, undefined, PACKET_COUNT]} frustumCulled={false}>
+      <instancedMesh
+        ref={packetsRef}
+        args={[undefined, undefined, PACKET_COUNT]}
+        frustumCulled={false}
+      >
         <sphereGeometry args={[0.5, 16, 16]} />
         <meshBasicMaterial
           color="#00eaff"

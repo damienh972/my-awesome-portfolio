@@ -13,9 +13,9 @@ export const QUIZ_QUESTIONS: Question[] = [
       "Vitesse de transaction maximale",
       "Immuabilité et traçabilité des données",
       "Stockage illimité gratuit",
-      "Confidentialité totale des données"
+      "Confidentialité totale des données",
     ],
-    correctAnswer: 1
+    correctAnswer: 1,
   },
   {
     id: 2,
@@ -24,9 +24,9 @@ export const QUIZ_QUESTIONS: Question[] = [
       "Un mot de passe crypté",
       "Une empreinte numérique unique d'un bloc",
       "Le nombre de transactions validées",
-      "Un token de sécurité"
+      "Un token de sécurité",
     ],
-    correctAnswer: 1
+    correctAnswer: 1,
   },
   {
     id: 3,
@@ -35,8 +35,8 @@ export const QUIZ_QUESTIONS: Question[] = [
       "Par ordre alphabétique",
       "Par leur date de création uniquement",
       "Chaque bloc contient le hash du bloc précédent",
-      "Par un serveur central"
+      "Par un serveur central",
     ],
-    correctAnswer: 2
-  }
+    correctAnswer: 2,
+  },
 ];

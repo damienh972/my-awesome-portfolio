@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react";
 import { Background } from "./Background";
 
 export function BackgroundWrapper() {
-
   const [currentSection, setCurrentSection] = useState(0);
   const scrollProgressRef = useRef(0);
 
@@ -34,5 +33,7 @@ export function BackgroundWrapper() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  return <Background scrollRef={scrollProgressRef} currentSection={currentSection} />;
+  return (
+    <Background scrollRef={scrollProgressRef} currentSection={currentSection} />
+  );
 }

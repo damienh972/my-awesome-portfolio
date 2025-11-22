@@ -1,4 +1,4 @@
-import { perlinNoise3D } from './perlinNoise3D';
+import { perlinNoise3D } from "./perlinNoise3D";
 
 export const essenceVertexShader = `
 attribute float scale;

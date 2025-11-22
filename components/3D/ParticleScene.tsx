@@ -9,13 +9,16 @@ interface ParticleSceneProps {
   isHovered: boolean;
 }
 
-export function ParticleScene({ mousePosition, isHovered }: ParticleSceneProps) {
-
+export function ParticleScene({
+  mousePosition,
+  isHovered,
+}: ParticleSceneProps) {
   const getCameraSettings = () => {
-    if (typeof window === 'undefined') return { position: [0, 0, 8] as [number, number, number], fov: 75 };
+    if (typeof window === "undefined")
+      return { position: [0, 0, 8] as [number, number, number], fov: 75 };
 
     const width = window.innerWidth;
-    
+
     if (width < 640) {
       // Mobile
       return { position: [0, 0, 12] as [number, number, number], fov: 75 };
@@ -32,17 +35,21 @@ export function ParticleScene({ mousePosition, isHovered }: ParticleSceneProps) 
   return (
     <Canvas
       camera={cameraSettings}
-      style={{ width: '100%', height: '100%', display: 'block' }}
+      style={{ width: "100%", height: "100%", display: "block" }}
       gl={{
         antialias: true,
         alpha: true,
-        powerPreference: "high-performance"
+        powerPreference: "high-performance",
       }}
     >
       <Suspense fallback={null}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[5, 5, 5]} intensity={1} color="#00d9ff" />
-        <directionalLight position={[-5, -5, -5]} intensity={0.5} color="#b026ff" />
+        <directionalLight
+          position={[-5, -5, -5]}
+          intensity={0.5}
+          color="#b026ff"
+        />
         <pointLight
           position={[
             (mousePosition.x - 0.5) * 10,

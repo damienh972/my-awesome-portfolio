@@ -5,14 +5,13 @@ import * as THREE from "three";
  * It injects custom vertex and fragment shader code to achieve the desired visual style.
  */
 export const onPacketBeforeCompile = (shader: THREE.ShaderMaterial) => {
-
   shader.uniforms.uColor = { value: new THREE.Color("#00eaff") };
 
   shader.vertexShader = `
     varying vec3 vPosition;
     ${shader.vertexShader}
   `.replace(
-    '#include <begin_vertex>',
+    "#include <begin_vertex>",
     `
     #include <begin_vertex>
     vPosition = position;
@@ -24,7 +23,7 @@ export const onPacketBeforeCompile = (shader: THREE.ShaderMaterial) => {
     varying vec3 vPosition;
     ${shader.fragmentShader}
   `.replace(
-    'vec4 diffuseColor = vec4( diffuse, opacity );',
+    "vec4 diffuseColor = vec4( diffuse, opacity );",
     `
     
     // Ball glow shader effect

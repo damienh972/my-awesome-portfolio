@@ -12,7 +12,13 @@ interface TextParticlesProps {
   mouseRadius?: number;
 }
 
-export function TextParticles({ text, font="Arial", mousePosition, isHovered, mouseRadius = 0.4 }: TextParticlesProps) {
+export function TextParticles({
+  text,
+  font = "Arial",
+  mousePosition,
+  isHovered,
+  mouseRadius = 0.4,
+}: TextParticlesProps) {
   const mesh = useRef<THREE.Points>(null!);
   const particlesData = useRef<{
     positions: Float32Array;
@@ -25,11 +31,14 @@ export function TextParticles({ text, font="Arial", mousePosition, isHovered, mo
   // Load Michroma font
   useEffect(() => {
     if (typeof window !== "undefined" && document.fonts) {
-      document.fonts.load(`400 100px ${font}`).then(() => {
-        setFontLoaded(true);
-      }).catch(() => {
-        setFontLoaded(true);
-      });
+      document.fonts
+        .load(`400 100px ${font}`)
+        .then(() => {
+          setFontLoaded(true);
+        })
+        .catch(() => {
+          setFontLoaded(true);
+        });
     } else {
       setFontLoaded(true);
     }
@@ -38,7 +47,14 @@ export function TextParticles({ text, font="Arial", mousePosition, isHovered, mo
   /**
    * Generate particles ONCE per text
    */
-  const { positions, colors, targetPositions, velocities, dispersedTimes, count } = useMemo(() => {
+  const {
+    positions,
+    colors,
+    targetPositions,
+    velocities,
+    dispersedTimes,
+    count,
+  } = useMemo(() => {
     if (typeof window === "undefined" || !fontLoaded) {
       return {
         positions: new Float32Array(0),
@@ -141,12 +157,13 @@ export function TextParticles({ text, font="Arial", mousePosition, isHovered, mo
   useFrame((state) => {
     if (!mesh.current || !particlesData.current || count === 0) return;
 
-    const { positions, targetPositions, velocities, dispersedTimes } = particlesData.current;
+    const { positions, targetPositions, velocities, dispersedTimes } =
+      particlesData.current;
     const time = state.clock.getElapsedTime();
 
     // 3D compute mouse position
     const mouse3D = new THREE.Vector3(
-      (mousePosition.x - 0.5) * 2, 
+      (mousePosition.x - 0.5) * 2,
       -(mousePosition.y - 0.5) * 2,
       0.5 // Z fixed
     );
@@ -158,7 +175,9 @@ export function TextParticles({ text, font="Arial", mousePosition, isHovered, mo
     const cameraPos = state.camera.position;
     const direction = mouse3D.sub(cameraPos).normalize();
     const distance = -cameraPos.z / direction.z;
-    const mouseWorldPos = cameraPos.clone().add(direction.multiplyScalar(distance));
+    const mouseWorldPos = cameraPos
+      .clone()
+      .add(direction.multiplyScalar(distance));
 
     const mouseX = mouseWorldPos.x;
     const mouseY = mouseWorldPos.y;
@@ -208,7 +227,6 @@ export function TextParticles({ text, font="Arial", mousePosition, isHovered, mo
         const timeSinceDispersion = time - dispersedTimes[i];
 
         if (!isHovered || distToMouse >= dispersionRadius) {
-
           const returnStrength = Math.min(timeSinceDispersion * 0.01, 0.02);
 
           velocities[i3] += (tx - x) * returnStrength;
@@ -254,17 +272,13 @@ export function TextParticles({ text, font="Arial", mousePosition, isHovered, mo
   return (
     <points ref={mesh}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
-        <bufferAttribute
-          attach="attributes-color"
-          args={[colors, 3]}
-        />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
       <pointsMaterial
-        size={typeof window !== 'undefined' && window.innerWidth < 640 ? 0.06 : 0.08}
+        size={
+          typeof window !== "undefined" && window.innerWidth < 640 ? 0.06 : 0.08
+        }
         vertexColors
         transparent
         opacity={1.0}
