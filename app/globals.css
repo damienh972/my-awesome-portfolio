@@ -59,7 +59,6 @@
   html, body {
     margin: 0;
     padding: 0;
-    background-color: #000000;
     color: #ffffff;
     overscroll-behavior-y: none;
     font-feature-settings: "rlig" 1, "calt" 1;

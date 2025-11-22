@@ -4,7 +4,7 @@ import { BackgroundWrapper } from "@/components/3D/BackgroundWrapper";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen">
       <BackgroundWrapper />
       <Hero />
       <Blockchain />

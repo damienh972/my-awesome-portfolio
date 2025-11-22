@@ -3,18 +3,17 @@
 import * as THREE from "three";
 import { useMemo, useRef, useLayoutEffect, RefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import { onPacketBeforeCompile } from "./shaders/packet";
 
-// Network Parameters
-const NODE_COUNT = 24;
-const CONNECTION_DISTANCE = 12;
-const PACKET_COUNT = 24;
+const NODE_COUNT = 18;
+const CONNECTION_DISTANCE = 14;
+const PACKET_COUNT = 40;
 
 interface Props {
   scrollRef: RefObject<number>;
   currentSection: number;
 }
 
-// Seeded random number generator for consistent node placement
 function createSeededRandom(seed: number) {
   let value = seed;
   return function () {
@@ -24,27 +23,20 @@ function createSeededRandom(seed: number) {
 }
 
 export function BlockchainBackground({ scrollRef, currentSection }: Props) {
+
   const groupRef = useRef<THREE.Group>(null);
   const nodesRef = useRef<THREE.InstancedMesh>(null);
   const cablesRef = useRef<THREE.InstancedMesh>(null);
   const packetsRef = useRef<THREE.InstancedMesh>(null);
 
-  // Prevent re-creating dummy object on each frame
   const dummy = useMemo(() => new THREE.Object3D(), []);
-
   const { pointer } = useThree();
 
   const { nodes, connections } = useMemo(() => {
-    // Generate nodes and connections
-    const rng = createSeededRandom(24);
+    const rng = createSeededRandom(42);
     const _nodes = [];
-
     for (let i = 0; i < NODE_COUNT; i++) {
-      _nodes.push(new THREE.Vector3(
-        (rng() - 0.5) * 40,
-        (rng() - 0.5) * 30,
-        (rng() - 0.5) * 20
-      ));
+      _nodes.push(new THREE.Vector3((rng() - 0.5) * 40, (rng() - 0.5) * 30, (rng() - 0.5) * 20));
     }
     const _connections = [];
     for (let i = 0; i < NODE_COUNT; i++) {
@@ -58,7 +50,6 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
   }, []);
 
   useLayoutEffect(() => {
-    // Nodes
     if (nodesRef.current) {
       nodes.forEach((pos, i) => {
         dummy.position.copy(pos);
@@ -68,8 +59,6 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
       });
       nodesRef.current.instanceMatrix.needsUpdate = true;
     }
-
-    // Links
     if (cablesRef.current) {
       connections.forEach((conn, i) => {
         const dist = conn.start.distanceTo(conn.end);
@@ -83,13 +72,19 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
     }
   }, [nodes, connections, dummy]);
 
-  const packetsData = useRef(Array.from({ length: PACKET_COUNT }).map(() => ({ active: false, progress: 0, routeIndex: 0, speed: 0 })));
+  const packetsData = useRef(Array.from({ length: PACKET_COUNT }).map((_, i) => ({
+    active: i < 15,
+    progress: Math.random(),
+    routeIndex: Math.floor(Math.random() * connections.length),
+    speed: 0.5 + Math.random() * 0.5
+  })));
 
   useFrame((state, delta) => {
     if (!groupRef.current || !packetsRef.current) return;
 
     groupRef.current.rotation.y += 0.1 * delta;
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, pointer.y * 0.2, 0.1);
+    const targetRotX = (pointer.y * 0.2) || 0;
+    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetRotX, delta * 2);
 
     const scrollProgress = scrollRef.current || 0;
     const targetPos = new THREE.Vector3();
@@ -99,33 +94,29 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
     } else {
       const t = Math.min(1, scrollProgress * 2);
       const ease = t * (2 - t);
-      targetPos.set(
-        0,
-        THREE.MathUtils.lerp(-50, 0, ease),
-        THREE.MathUtils.lerp(-60, -12, ease)
-      );
+      targetPos.set(0, THREE.MathUtils.lerp(-50, 0, ease), THREE.MathUtils.lerp(-60, -12, ease));
     }
 
     if (currentSection === 0 && scrollProgress === 0 && groupRef.current.position.y === 0) {
       groupRef.current.position.set(0, -50, -60);
     } else {
-      const damp = 1 - Math.pow(0.001, delta);
-      groupRef.current.position.lerp(targetPos, damp * 2);
+      const dampFactor = 1 - Math.exp(-5 * delta);
+      groupRef.current.position.lerp(targetPos, dampFactor);
     }
 
     let dirty = false;
-
     packetsData.current.forEach((packet, i) => {
-
       if (!packet.active) {
-        // Normalised chance to activate per frame
-        if (Math.random() < 0.5 * delta) {
+        if (Math.random() < 0.2) {
           packet.active = true;
           packet.progress = 0;
           packet.routeIndex = Math.floor(Math.random() * connections.length);
-          // 1 or 2 units per second
           packet.speed = 0.5 + Math.random() * 0.5;
         } else {
+          dummy.scale.set(0, 0, 0);
+          dummy.updateMatrix();
+          packetsRef.current!.setMatrixAt(i, dummy.matrix);
+          dirty = true;
           return;
         }
       }
@@ -134,7 +125,7 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
 
       if (packet.progress >= 1) {
         packet.active = false;
-        dummy.position.set(0, -99999, 0);
+        dummy.scale.set(0, 0, 0);
         dummy.updateMatrix();
         packetsRef.current!.setMatrixAt(i, dummy.matrix);
         dirty = true;
@@ -142,7 +133,8 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
         const route = connections[packet.routeIndex];
         if (route) {
           dummy.position.lerpVectors(route.start, route.end, packet.progress);
-          dummy.scale.set(1, 1, 1);
+          dummy.lookAt(route.end);
+          dummy.scale.set(0.09, 0.09, 0.6);
           dummy.updateMatrix();
           packetsRef.current!.setMatrixAt(i, dummy.matrix);
           dirty = true;
@@ -156,18 +148,27 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
   return (
     <group ref={groupRef} position={[0, -50, -60]}>
       <instancedMesh ref={nodesRef} args={[undefined, undefined, NODE_COUNT]}>
-        <sphereGeometry args={[0.8, 16, 16]} />
-        <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
+        <sphereGeometry args={[0.8, 32, 32]} />
+        <meshStandardMaterial color="#334155" roughness={0.2} metalness={0.9} emissive="#1e1b4b" emissiveIntensity={0.2} />
       </instancedMesh>
 
       <instancedMesh ref={cablesRef} args={[undefined, undefined, connections.length]}>
         <cylinderGeometry args={[0.03, 0.03, 1, 4]} />
-        <meshBasicMaterial color="#334155" transparent opacity={0.3} />
+        <meshBasicMaterial color="#475569" transparent opacity={0.2} blending={THREE.AdditiveBlending} />
       </instancedMesh>
 
-      <instancedMesh ref={packetsRef} args={[undefined, undefined, PACKET_COUNT]}>
-        <sphereGeometry args={[0.15, 8, 8]} />
-        <meshBasicMaterial color="#00eaff" toneMapped={false} />
+      <instancedMesh ref={packetsRef} args={[undefined, undefined, PACKET_COUNT]} frustumCulled={false}>
+        <sphereGeometry args={[0.5, 16, 16]} />
+        <meshBasicMaterial
+          color="#00eaff"
+          transparent
+          opacity={1}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+          onBeforeCompile={onPacketBeforeCompile}
+          toneMapped={false}
+        />
       </instancedMesh>
     </group>
   );
