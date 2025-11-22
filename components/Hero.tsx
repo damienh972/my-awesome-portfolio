@@ -7,6 +7,7 @@ import { ParticleScene } from "./3D/ParticleScene";
 export function Hero() {
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
   const [isNameHovered, setIsNameHovered] = useState(false);
+  const [shouldDisablePointer, setShouldDisablePointer] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({
@@ -14,17 +15,21 @@ export function Hero() {
     offset: ["start start", "end start"]
   });
 
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.6, 0.95], [1, 0.6, 0]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.4, 0.6], [1, 0.5, 0]);
 
-  // Initial hover check on mount (for touch devices)
+  useEffect(() => {
+    const unsubscribe = scrollYProgress.on("change", (value) => {
+      setShouldDisablePointer(value > 0.4);
+    });
+    return () => unsubscribe();
+  }, [scrollYProgress]);
+
   useEffect(() => {
     const checkInitialHover = (e: MouseEvent) => {
       if (sectionRef.current) {
         const rect = sectionRef.current.getBoundingClientRect();
         const x = e.clientX;
         const y = e.clientY;
-
-        // Check if mouse is inside the section
         if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
           setIsNameHovered(true);
           setMousePosition({
@@ -34,12 +39,9 @@ export function Hero() {
         }
       }
     };
-
-    // Delay adding the listener to avoid immediate trigger on mount
     const timer = setTimeout(() => {
       window.addEventListener('mousemove', checkInitialHover, { once: true });
     }, 100);
-
     return () => {
       clearTimeout(timer);
       window.removeEventListener('mousemove', checkInitialHover);
@@ -77,22 +79,20 @@ export function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex flex-col w-full overflow-hidden bg-black"
-      style={{ height: '200vh' }}
+      className="relative flex flex-col w-full"
+      style={{ height: '200vh', zIndex: 1 }}
     >
       <motion.div
         className="fixed inset-0 w-full h-screen"
-        style={{ opacity: contentOpacity }}
+        style={{
+          opacity: contentOpacity,
+          zIndex: shouldDisablePointer ? -1 : 1,
+          pointerEvents: shouldDisablePointer ? 'none' : 'auto',
+        }}
         onMouseMove={handleMouseMove}
         onTouchMove={handleTouchMove}
-        onMouseEnter={() => {
-          console.log('Mouse entered name area');
-          setIsNameHovered(true);
-        }}
-        onMouseLeave={() => {
-          console.log('Mouse left name area');
-          setIsNameHovered(false);
-        }}
+        onMouseEnter={() => setIsNameHovered(true)}
+        onMouseLeave={() => setIsNameHovered(false)}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}

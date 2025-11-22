@@ -1,17 +1,13 @@
 import { Hero } from "@/components/Hero";
+import { Blockchain } from "@/components/Blockchain";
 import { BackgroundWrapper } from "@/components/3D/BackgroundWrapper";
 
 export default function Home() {
   return (
-    <main className="relative">
+    <main className="min-h-screen bg-black">
       <BackgroundWrapper />
-      <div className="relative z-10">
-        <Hero />
-        <section className="flex items-center justify-center bg-gray-900 text-white" style={{ height: '200vh' }}>
-          <h2 className="text-4xl">Blockchain Section</h2>
-        </section>
-      </div>
-
+      <Hero />
+      <Blockchain />
     </main>
   );
 }

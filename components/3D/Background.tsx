@@ -1,140 +1,129 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
-import { Suspense, useState, useEffect } from "react";
-import { useFrame } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Suspense, useMemo, useRef, RefObject, useEffect } from "react";
 import * as THREE from "three";
+import { Preload, Points, PointMaterial } from "@react-three/drei";
 import { PolyhedronOrb } from "./PolyhedronOrb";
+import { BlockchainBackground } from "./BlockchainBackground";
+import { QuizPanel3D } from "./QuizPanel3D";
 
 interface BackgroundProps {
-  scrollProgress: number;
+  scrollRef: RefObject<number>;
   currentSection: number;
 }
 
-export function Background({ scrollProgress, currentSection }: BackgroundProps) {
-  const [bgGradient, setBgGradient] = useState('linear-gradient(to bottom, rgb(1, 1, 23), rgb(11, 9, 48))');
+interface CursorPosition {
+  x: number;
+  y: number;
+}
+
+function StaticStars() {
+  const ref = useRef<THREE.Points>(null);
+  const sphere = useMemo(() => {
+    const positions = new Float32Array(600 * 3);
+    for (let i = 0; i < 600; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 80;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 80;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+    }
+    return positions;
+  }, []);
+  return <group rotation={[0, 0, Math.PI / 4]}><Points ref={ref} positions={sphere} stride={3} frustumCulled={false}><PointMaterial transparent color="#446688" size={0.05} sizeAttenuation={true} depthWrite={false} opacity={0.3} /></Points></group>;
+}
+
+function CameraController({
+  scrollRef,
+  currentSection,
+  cursor
+}: {
+  scrollRef: RefObject<number>,
+  currentSection: number,
+  cursor: RefObject<CursorPosition>
+}) {
+
+  useFrame((state, delta) => {
+    const scrollProgress = scrollRef.current || 0;
+
+    const mouseX = cursor.current?.x || 0;
+    const mouseY = cursor.current?.y || 0;
+
+    const parallaxX = mouseX * 0.5;
+    const parallaxY = mouseY * 0.5;
+
+    let targetZ = 12;
+    let targetLookAtY = 0;
+
+    if (currentSection === 1) {
+      const t = Math.min(1, scrollProgress * 2);
+      if (t < 0.5) {
+        const p = t / 0.5;
+        targetZ = THREE.MathUtils.lerp(12, 8, p);
+      } else {
+        const p = (t - 0.5) / 0.5;
+        const smoothP = p * p * (3 - 2 * p);
+        targetZ = THREE.MathUtils.lerp(8, 6, smoothP);
+        targetLookAtY = Math.sin(p * Math.PI) * -2;
+      }
+    }
+
+    state.camera.position.x += (parallaxX - state.camera.position.x) * 5 * delta;
+    state.camera.position.y += (parallaxY - state.camera.position.y) * 5 * delta;
+    state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetZ, 0.1);
+
+    state.camera.lookAt(0, targetLookAtY, 0);
+  });
+
+  return null;
+}
+
+export function Background({ scrollRef, currentSection }: BackgroundProps) {
+  const bgGradient = 'radial-gradient(circle at 50% 50%, rgb(15, 18, 30) 0%, rgb(0, 0, 5) 100%)';
+
+  const cursor = useRef<CursorPosition>({ x: 0, y: 0 });
 
   useEffect(() => {
-    updateBackground(currentSection, scrollProgress, setBgGradient);
-  }, [currentSection, scrollProgress]);
+    const handleMouseMove = (event: MouseEvent) => {
+      cursor.current = {
+        x: event.clientX / window.innerWidth - 0.5,
+        y: event.clientY / window.innerHeight - 0.5
+      };
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   return (
-    <div className="fixed inset-0 -z-10 w-full h-full" style={{ background: bgGradient }}>
+    <div className="fixed inset-0 w-full h-full pointer-events-none" style={{ background: bgGradient, zIndex: 0 }}>
       <Canvas
-        camera={{ position: [0, 0, 8], fov: 75 }}
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: "high-performance",
-        }}
-        style={{ width: '100%', height: '100%' }}
+        camera={{ position: [0, 0, 12], fov: 50 }}
+        dpr={[1, 1.5]}
+        gl={{ antialias: false, alpha: true, powerPreference: "high-performance", stencil: false, depth: true }}
+        style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
       >
         <Suspense fallback={null}>
-          <Scene3DContent scrollProgress={scrollProgress} currentSection={currentSection} />
+          <ambientLight intensity={0.4} />
+          <directionalLight position={[5, 5, 5]} intensity={1} color="#00d9ff" />
+          <StaticStars />
+          <fog attach="fog" args={["#02020a", 10, 60]} />
+
+          <CameraController
+            scrollRef={scrollRef}
+            currentSection={currentSection}
+            cursor={cursor}
+          />
+
+          <PolyhedronOrb
+            scale={1.2}
+            scrollRef={scrollRef}
+            currentSection={currentSection}
+          />
+
+          <BlockchainBackground scrollRef={scrollRef} currentSection={currentSection} />
+          <QuizPanel3D position={[3.5, 0, -2]} scrollRef={scrollRef} currentSection={currentSection} />
+          <Preload all />
         </Suspense>
       </Canvas>
     </div>
   );
-}
-
-interface Scene3DContentProps {
-  scrollProgress: number;
-  currentSection: number;
-}
-
-function Scene3DContent({ scrollProgress, currentSection }: Scene3DContentProps) {
-  useFrame((state) => {
-    // Camera animation based on scroll
-    const targetPosition = getCameraPosition(scrollProgress, currentSection);
-    const targetLookAt = getCameraLookAt(scrollProgress, currentSection);
-
-    state.camera.position.lerp(
-      new THREE.Vector3(...targetPosition),
-      0.1
-    );
-
-    const lookAtTarget = new THREE.Vector3(...targetLookAt);
-    const currentLookAt = new THREE.Vector3();
-    state.camera.getWorldDirection(currentLookAt);
-    currentLookAt.add(state.camera.position);
-    currentLookAt.lerp(lookAtTarget, 0.1);
-    state.camera.lookAt(currentLookAt);
-  });
-
-  const heroToBlockchainProgress = Math.max(0, Math.min(1, scrollProgress));
-
-  return (
-    <>
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[5, 5, 5]} intensity={0.8} color="#00d9ff" />
-      <directionalLight position={[-5, -5, -5]} intensity={0.4} color="#b026ff" />
-
-      <fog attach="fog" args={["#000000", 10, 50]} />
-
-      {(currentSection === 0 || currentSection === 1) && (
-        <PolyhedronOrb
-          scale={1.2}
-          transitionProgress={currentSection === 0 ? heroToBlockchainProgress : 1}
-        />
-      )}
-    </>
-  );
-}
-
-function updateBackground(section: number, progress: number, setBgGradient: (gradient: string) => void) {
-  if (section === 0) {
-    const t = Math.min(1, progress);
-    const topR = 1 + (11 - 1) * t;
-    const topG = 1 + (9 - 1) * t;
-    const topB = 23 + (48 - 23) * t;
-    const bottomR = 11 + (31 - 11) * t;
-    const bottomG = 9 + (24 - 9) * t;
-    const bottomB = 48 + (70 - 48) * t;
-
-    setBgGradient(`linear-gradient(to bottom, rgb(${topR}, ${topG}, ${topB}), rgb(${bottomR}, ${bottomG}, ${bottomB}))`);
-  } else if (section === 1) {
-    setBgGradient('linear-gradient(to bottom, rgb(11, 9, 48), rgb(31, 24, 70))');
-  } else {
-    setBgGradient('linear-gradient(to bottom, rgb(1, 1, 23), rgb(11, 9, 48))');
-  }
-}
-
-function getCameraPosition(
-  progress: number,
-  section: number
-): [number, number, number] {
-  switch (section) {
-    case 0:
-      // Mouvement subtil pendant le scroll du Hero
-      return [
-        progress * 0.5,
-        progress * -0.3,
-        8 - progress * 0.5,
-      ];
-    case 1:
-      // Mouvement plus prononcé dans la section Blockchain
-      return [
-        0.5 + progress * 2.5,
-        -0.3 + progress * -0.7,
-        7.5 - progress * 2.5,
-      ];
-    default:
-      return [0, 0, 8];
-  }
-}
-
-function getCameraLookAt(
-  progress: number,
-  section: number
-): [number, number, number] {
-  switch (section) {
-    case 0:
-      // La caméra commence à regarder légèrement vers le bas
-      return [0, progress * -0.5, 0];
-    case 1:
-      // Continue de regarder vers le bas
-      return [0, -0.5 + progress * -1.5, 0];
-    default:
-      return [0, 0, 0];
-  }
 }
