@@ -35,7 +35,9 @@ export function QuizPanel3D({
 
     if (currentSection === 1) {
       const scrollProgress = scrollRef.current;
-      const normalizedProgress = Math.min(1, scrollProgress * 2);
+
+      const currentProgress = scrollProgress || 0;
+      const normalizedProgress = Math.min(1, currentProgress * 2);
 
       let enterT = 0;
       if (normalizedProgress > 0.5) {
@@ -56,6 +58,7 @@ export function QuizPanel3D({
       targetY,
       0.1
     );
+
     groupRef.current.position.x = position[0];
     groupRef.current.position.z = position[2];
 
@@ -105,7 +108,12 @@ export function QuizPanel3D({
   };
 
   return (
-    <group ref={groupRef} scale={0.6}>
+    // CORRECTION ICI : On initialise position Y à -20 pour éviter l'effet de chute
+    <group
+      ref={groupRef}
+      scale={0.6}
+      position={[position[0], -20, position[2]]}
+    >
       <RoundedBox
         ref={panelRef}
         args={[5, 4, 0.15]}
