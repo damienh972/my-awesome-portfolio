@@ -7,6 +7,7 @@ export function BackgroundWrapper() {
   const [currentSection, setCurrentSection] = useState(0);
   const scrollProgressRef = useRef(0);
   const snapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isSnappingRef = useRef(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -42,23 +43,32 @@ export function BackgroundWrapper() {
         return prev;
       });
 
-      if (snapTimeoutRef.current) {
-        clearTimeout(snapTimeoutRef.current);
-      }
+      // Snapping logic for the quiz section
+      const QUIZ_PERFECT_RATIO = 0.58;
 
-      snapTimeoutRef.current = setTimeout(() => {
-        const transitionPoint = HERO_HEIGHT;
-        const distance = Math.abs(scrollY - transitionPoint);
+      if (section === 1 && !isSnappingRef.current) {
+        const quizTargetY =
+          HERO_HEIGHT + SCROLLABLE_HEIGHT * QUIZ_PERFECT_RATIO;
+        const distance = Math.abs(scrollY - quizTargetY);
 
-        if (distance < 50 && distance > 5) {
-          window.scrollTo({
-            top: transitionPoint,
-            behavior: "smooth",
-          });
-        } else if (scrollY < 50 && scrollY > 5) {
-          window.scrollTo({ top: 0, behavior: "smooth" });
+        // attraction range
+        if (distance < 150 && distance > 5) {
+          if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+
+          // Snap after a short delay
+          snapTimeoutRef.current = setTimeout(() => {
+            isSnappingRef.current = true;
+            window.scrollTo({
+              top: quizTargetY,
+              behavior: "smooth",
+            });
+            // Allow snapping again after animation
+            setTimeout(() => {
+              isSnappingRef.current = false;
+            }, 600);
+          }, 50);
         }
-      }, 150);
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -67,9 +77,8 @@ export function BackgroundWrapper() {
     return () => {
       window.removeEventListener("scroll", handleScroll);
       if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined")
         window.history.scrollRestoration = "auto";
-      }
     };
   }, []);
 

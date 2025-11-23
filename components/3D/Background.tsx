@@ -180,8 +180,10 @@ export function Background({ scrollRef, currentSection }: BackgroundProps) {
       />
 
       <div
-        className="fixed inset-0 w-full h-full pointer-events-none"
-        style={{ zIndex: 0 }}
+        className="fixed inset-0 w-full h-full"
+        style={{
+          zIndex: currentSection === 1 ? 50 : 0,
+        }}
       >
         <Canvas
           camera={{ position: [0, 0, 12], fov: 50 }}
@@ -193,7 +195,7 @@ export function Background({ scrollRef, currentSection }: BackgroundProps) {
             stencil: false,
             depth: true,
           }}
-          style={{ width: "100%", height: "100%", pointerEvents: "none" }}
+          style={{ width: "100%", height: "100%", pointerEvents: "auto" }}
         >
           <Suspense fallback={null}>
             <DynamicAmbient currentSection={currentSection} />
@@ -225,11 +227,13 @@ export function Background({ scrollRef, currentSection }: BackgroundProps) {
               scrollRef={scrollRef}
               currentSection={currentSection}
             />
-            <QuizPanel3D
-              position={[3.5, 0, -2]}
-              scrollRef={scrollRef}
-              currentSection={currentSection}
-            />
+            <Suspense fallback={null}>
+              <QuizPanel3D
+                position={[3.5, 0, -2]}
+                scrollRef={scrollRef}
+                currentSection={currentSection}
+              />
+            </Suspense>
 
             <Preload all />
           </Suspense>
