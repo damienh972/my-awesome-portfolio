@@ -17,13 +17,13 @@ export function Hero() {
 
   const contentOpacity = useTransform(
     scrollYProgress,
-    [0, 0.4, 0.6],
-    [1, 0.5, 0]
+    [0, 0.6, 0.9],
+    [1, 1, 0]
   );
 
   useEffect(() => {
     const unsubscribe = scrollYProgress.on("change", (value) => {
-      setShouldDisablePointer(value > 0.4);
+      setShouldDisablePointer(value > 0.8);
     });
     return () => unsubscribe();
   }, [scrollYProgress]);

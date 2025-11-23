@@ -34,21 +34,17 @@ export function QuizPanel3D({
     let targetY = -20;
 
     if (currentSection === 1) {
-      const scrollProgress = scrollRef.current;
+      const scrollProgress = scrollRef.current || 0;
 
-      const currentProgress = scrollProgress || 0;
-      const normalizedProgress = Math.min(1, currentProgress * 2);
+      const animationEnd = 0.6;
 
-      let enterT = 0;
-      if (normalizedProgress > 0.5) {
-        enterT = (normalizedProgress - 0.5) / 0.5;
-      }
-      const ease =
-        1 +
-        2.70158 * Math.pow(enterT - 1, 3) +
-        1.70158 * Math.pow(enterT - 1, 2);
+      let animProgress = scrollProgress / animationEnd;
 
-      targetY = THREE.MathUtils.lerp(-20, position[1], enterT >= 1 ? 1 : ease);
+      if (animProgress > 1) animProgress = 1;
+
+      const ease = 1 - Math.pow(1 - animProgress, 3);
+
+      targetY = THREE.MathUtils.lerp(-80, position[1], ease);
     } else {
       targetY = -20;
     }
@@ -108,7 +104,6 @@ export function QuizPanel3D({
   };
 
   return (
-    // CORRECTION ICI : On initialise position Y à -20 pour éviter l'effet de chute
     <group
       ref={groupRef}
       scale={0.6}
