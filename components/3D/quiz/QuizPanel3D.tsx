@@ -3,12 +3,14 @@
 import { useRef, useState, useMemo, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { Text, RoundedBox } from "@react-three/drei";
 import {
   sc2ButtonsVertexShader,
   sc2ButtonsFragmentShader,
-} from "../3D/shaders/sc2Buttons";
+} from "../shaders/sc2Buttons";
 import { QUIZ_QUESTIONS } from "@/const/quiz";
+import { StatusStepper } from "./StatusStepper";
+import { AnimatedText } from "./AnimatedText";
+import { AnimatedButton } from "./AnimatedButton";
 
 interface QuizPanel3DProps {
   position: [number, number, number];
@@ -29,10 +31,8 @@ const BLOCK_H = PANEL_HEIGHT / GRID_ROWS;
 const BLOCK_D = 0.2;
 
 const SC_ELECTRIC_BLUE = new THREE.Color("#735bac");
-const SC_HOVER_VIOLET = new THREE.Color("#4617d5");
 const SC_TEXT_COLOR = "#e0f7fa";
 const SC_TEXT_ACTIVE = "#ffffff";
-const FONT_URL = "/fonts/michroma/Michroma-Regular.ttf";
 const FONT_NAME = "Michroma";
 
 export function QuizPanel3D({
@@ -162,12 +162,12 @@ export function QuizPanel3D({
       groupRef.current.position.z = position[2];
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
-        state.mouse.y * 0.03,
+        state.pointer.y * 0.03,
         0.1
       );
       groupRef.current.rotation.y = THREE.MathUtils.lerp(
         groupRef.current.rotation.y,
-        state.mouse.x * 0.03,
+        state.pointer.x * 0.03,
         0.1
       );
     }
@@ -219,9 +219,6 @@ export function QuizPanel3D({
 
   const handleAnswer = (idx: number) => {
     if (animState.current.textAlpha < 0.5) return;
-
-    const isCorrect = idx === QUIZ_QUESTIONS[currentQuestion].correctAnswer;
-    setSelectedAnswers([...selectedAnswers, idx]);
 
     if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
       setTimeout(() => setCurrentQuestion(currentQuestion + 1), 300);
@@ -307,6 +304,7 @@ export function QuizPanel3D({
                   <AnimatedButton
                     basePosition={[0, 0.6 - idx * 0.8, 0]}
                     args={[4.0, 0.55, 0.05]}
+                    baseColor={SC_ELECTRIC_BLUE}
                     baseShaderConfig={baseShaderConfig}
                     animState={animState}
                     onClick={() => handleAnswer(idx)}
@@ -343,6 +341,7 @@ export function QuizPanel3D({
               <AnimatedButton
                 basePosition={[0, -1, 0]}
                 args={[2.5, 0.6, 0.1]}
+                baseColor={SC_ELECTRIC_BLUE}
                 baseShaderConfig={null}
                 animState={animState}
                 onClick={handleRetry}
@@ -363,189 +362,5 @@ export function QuizPanel3D({
         </group>
       )}
     </group>
-  );
-}
-
-function StatusStepper({
-  currentQuestion,
-  totalQuestions,
-  answers,
-  correctAnswers,
-  basePosition,
-  animState,
-}: any) {
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame(() => {
-    if (groupRef.current) {
-      groupRef.current.position.z = basePosition[2] + animState.current.textZ;
-      groupRef.current.children.forEach((child: any) => {
-        if (child.material)
-          child.material.opacity = 0.9 * animState.current.textAlpha;
-      });
-    }
-  });
-
-  return (
-    <group ref={groupRef} position={[basePosition[0], basePosition[1], 0]}>
-      {Array.from({ length: totalQuestions }).map((_, i) => {
-        let color = "#444444";
-        if (i < currentQuestion) {
-          color = answers[i] === correctAnswers[i] ? "#00ff00" : "#ff0000";
-        } else if (i === currentQuestion) {
-          color = "#ffffff";
-        }
-
-        return (
-          <mesh key={i} position={[i * 0.3, 0, 0]}>
-            <boxGeometry args={[0.2, 0.05, 0.02]} />
-            <meshBasicMaterial color={color} transparent />
-          </mesh>
-        );
-      })}
-    </group>
-  );
-}
-
-function AnimatedText({
-  text,
-  basePosition,
-  fontSize,
-  color,
-  animState,
-  isHovered,
-}: any) {
-  const textRef = useRef<any>(null);
-  const targetScale = isHovered ? 1.05 : 1.0;
-
-  useFrame((state, delta) => {
-    if (textRef.current) {
-      const opacity = animState.current.textAlpha;
-      textRef.current.visible = opacity > 0.01;
-      textRef.current.fillOpacity = opacity;
-      textRef.current.position.z = basePosition[2] + animState.current.textZ;
-
-      const currentScale = textRef.current.scale.x;
-      const nextScale = THREE.MathUtils.lerp(
-        currentScale,
-        targetScale,
-        delta * 10
-      );
-      textRef.current.scale.setScalar(nextScale);
-    }
-  });
-  return (
-    <Text
-      ref={textRef}
-      position={[basePosition[0], basePosition[1], 0]}
-      fontSize={fontSize}
-      font={FONT_URL}
-      color={color}
-      anchorX="center"
-      anchorY="middle"
-      maxWidth={4.0}
-      textAlign="center"
-      fillOpacity={0}
-    >
-      {text}
-    </Text>
-  );
-}
-
-function AnimatedButton({
-  basePosition,
-  args,
-  baseShaderConfig,
-  animState,
-  onClick,
-  onOver,
-  onOut,
-  color,
-  emissive,
-  isHovered,
-}: any) {
-  const meshRef = useRef<any>(null);
-  const matRef = useRef<any>(null);
-
-  // Uniforms
-  const uniforms = useMemo(() => {
-    if (!baseShaderConfig) return null;
-    const u = THREE.UniformsUtils.clone(baseShaderConfig.uniforms);
-    u.baseColor.value = new THREE.Color(SC_ELECTRIC_BLUE);
-    return u;
-  }, [baseShaderConfig]);
-
-  const targetColor = isHovered ? SC_HOVER_VIOLET : SC_ELECTRIC_BLUE;
-  const targetHoverState = isHovered ? 1.0 : 0.0;
-  const targetScale = isHovered ? 1.05 : 1.0;
-
-  useFrame((state, delta) => {
-    const opacity = animState.current.textAlpha;
-
-    if (meshRef.current) {
-      meshRef.current.visible = opacity > 0.01;
-      meshRef.current.position.z = basePosition[2] + animState.current.textZ;
-
-      const currentScale = meshRef.current.scale.x;
-      const nextScale = THREE.MathUtils.lerp(
-        currentScale,
-        targetScale,
-        delta * 10
-      );
-      meshRef.current.scale.set(nextScale, nextScale, 1);
-    }
-
-    if (matRef.current) {
-      if (uniforms) {
-        matRef.current.uniforms.time.value = state.clock.getElapsedTime();
-
-        const hoverBoost = isHovered ? 1.5 : 1.0;
-        matRef.current.uniforms.opacity.value = 0.9 * opacity * hoverBoost;
-
-        matRef.current.uniforms.baseColor.value.lerp(targetColor, delta * 10);
-
-        matRef.current.uniforms.hoverState.value = THREE.MathUtils.lerp(
-          matRef.current.uniforms.hoverState.value,
-          targetHoverState,
-          delta * 5
-        );
-      } else {
-        matRef.current.opacity = opacity;
-      }
-    }
-  });
-
-  return (
-    <RoundedBox
-      ref={meshRef}
-      args={args}
-      radius={0.02}
-      smoothness={8}
-      position={[basePosition[0], basePosition[1], 0]}
-      onClick={onClick}
-      onPointerOver={onOver}
-      onPointerOut={onOut}
-    >
-      {baseShaderConfig ? (
-        <shaderMaterial
-          ref={matRef}
-          vertexShader={baseShaderConfig.vertexShader}
-          fragmentShader={baseShaderConfig.fragmentShader}
-          uniforms={uniforms}
-          transparent={true}
-          side={THREE.DoubleSide}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      ) : (
-        <meshStandardMaterial
-          ref={matRef}
-          color={color}
-          transparent
-          opacity={0}
-          emissive={emissive ? color : undefined}
-          emissiveIntensity={0.5}
-        />
-      )}
-    </RoundedBox>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, useTransform, useScroll } from "framer-motion";
-import { ParticleScene } from "./3D/ParticleScene";
+import { ParticleScene } from "./3D/particles/ParticleScene";
 
 export function Hero() {
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });

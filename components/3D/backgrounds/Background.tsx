@@ -4,9 +4,9 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Suspense, useMemo, useRef, RefObject, useEffect } from "react";
 import * as THREE from "three";
 import { Preload, Points, PointMaterial } from "@react-three/drei";
-import { PolyhedronOrb } from "./PolyhedronOrb";
+import { PolyhedronOrb } from "../orb/PolyhedronOrb";
 import { BlockchainBackground } from "./BlockchainBackground";
-import { QuizPanel3D } from "./QuizPanel3D";
+import { QuizPanel3D } from "../quiz/QuizPanel3D";
 
 interface BackgroundProps {
   scrollRef: RefObject<number>;

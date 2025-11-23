@@ -6,8 +6,8 @@ import * as THREE from "three";
 import {
   holographicVertexShader,
   holographicFragmentShader,
-} from "./shaders/holographic";
-import { essenceVertexShader, essenceFragmentShader } from "./shaders/essence";
+} from "../shaders/holographic";
+import { essenceVertexShader, essenceFragmentShader } from "../shaders/essence";
 
 interface PolyhedronOrbProps {
   scale?: number;

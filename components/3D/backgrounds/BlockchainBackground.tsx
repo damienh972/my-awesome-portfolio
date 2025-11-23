@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import { useMemo, useRef, useLayoutEffect, RefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { onPacketBeforeCompile } from "./shaders/packet";
+import { onPacketBeforeCompile } from "../shaders/packet";
 
 const NODE_COUNT = 18;
 const CONNECTION_DISTANCE = 14;
