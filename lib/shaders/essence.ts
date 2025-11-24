@@ -1,14 +1,12 @@
-import { perlinNoise3D } from "./perlinNoise3D";
+import { injectShaderUtils } from './utils';
 
-export const essenceVertexShader = `
+const vertexShaderCore = `
 attribute float scale;
 attribute vec3 randomness;
 attribute vec3 color;
 uniform float time;
 varying float vAlpha;
 varying vec3 vColor;
-
-${perlinNoise3D}
 
 void main() {
   vec3 pos = position;
@@ -37,6 +35,8 @@ void main() {
   vColor = color;
 }
 `;
+
+export const essenceVertexShader = injectShaderUtils(vertexShaderCore, ['perlinNoise3D']);
 
 export const essenceFragmentShader = `
 uniform float opacity;

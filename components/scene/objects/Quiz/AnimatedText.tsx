@@ -1,9 +1,8 @@
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-import { Text } from "@react-three/drei";
-
-const FONT_URL = "/fonts/michroma/Michroma-Regular.ttf";
+import { useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { Text } from '@react-three/drei';
+import { QUIZ_CONFIG } from '@/config/3d';
 
 type TroikaText = THREE.Mesh & {
   fillOpacity: number;
@@ -41,11 +40,7 @@ export function AnimatedText({
       textRef.current.position.z = basePosition[2] + animState.current.textZ;
 
       const currentScale = textRef.current.scale.x;
-      const nextScale = THREE.MathUtils.lerp(
-        currentScale,
-        targetScale,
-        delta * 10
-      );
+      const nextScale = THREE.MathUtils.lerp(currentScale, targetScale, delta * 10);
       textRef.current.scale.setScalar(nextScale);
     }
   });
@@ -54,11 +49,11 @@ export function AnimatedText({
       ref={textRef}
       position={[basePosition[0], basePosition[1], 0]}
       fontSize={fontSize}
-      font={FONT_URL}
+      font={QUIZ_CONFIG.text.fontUrl}
       color={color}
       anchorX="center"
       anchorY="middle"
-      maxWidth={4.0}
+      maxWidth={QUIZ_CONFIG.text.maxWidth}
       textAlign="center"
       fillOpacity={0}
     >

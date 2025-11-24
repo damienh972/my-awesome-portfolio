@@ -1,30 +1,18 @@
 "use client";
 
-import { useRef, useMemo, RefObject } from "react";
-import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-import {
-  holographicVertexShader,
-  holographicFragmentShader,
-} from "../shaders/holographic";
-import { essenceVertexShader, essenceFragmentShader } from "../shaders/essence";
-import { SeededRandom } from "@/utils/rng";
+import { useRef, useMemo, RefObject } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { holographicVertexShader, holographicFragmentShader, essenceVertexShader, essenceFragmentShader } from '@/lib/shaders';
+import { SeededRandom } from '@/utils/rng';
+import { ORB_CONFIG } from '@/config/3d';
 
-interface PolyhedronOrbProps {
-  scale?: number;
+interface OrbProps {
   scrollRef?: RefObject<number>;
   currentSection?: number;
-  transitionProgress?: number;
-  onPositionUpdate?: (position: [number, number, number]) => void;
 }
 
-export function PolyhedronOrb({
-  scale = 1,
-  transitionProgress: manualProgress = 0,
-  scrollRef,
-  currentSection = 0,
-  onPositionUpdate,
-}: PolyhedronOrbProps) {
+export function Orb({ scrollRef, currentSection = 0 }: OrbProps) {
   const orbRef = useRef<THREE.Mesh>(null);
   const innerCoreRef = useRef<THREE.Mesh>(null);
   const lightRef = useRef<THREE.PointLight>(null);
@@ -46,15 +34,16 @@ export function PolyhedronOrb({
   );
 
   const essenceParticles = useMemo(() => {
-    const rng = new SeededRandom(42);
-    const count = 300;
+    const rng = new SeededRandom(ORB_CONFIG.seed);
+    const count = ORB_CONFIG.essence.count;
     const positions = new Float32Array(count * 3);
     const scales = new Float32Array(count);
     const randomness = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i++) {
-      const radius = Math.pow(rng.next(), 1.5) * 1.1;
+      const radius = Math.pow(rng.next(), ORB_CONFIG.essence.distribution.radiusExponent) *
+                     ORB_CONFIG.essence.distribution.maxRadius;
       const theta = rng.next() * Math.PI * 2;
       const phi = Math.acos(2 * rng.next() - 1);
 
@@ -62,17 +51,24 @@ export function PolyhedronOrb({
       positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
       positions[i * 3 + 2] = radius * Math.cos(phi);
 
-      scales[i] = rng.next() * 0.5 + 0.2;
+      scales[i] = rng.next() * (ORB_CONFIG.essence.scale.max - ORB_CONFIG.essence.scale.min) +
+                  ORB_CONFIG.essence.scale.min;
 
       randomness[i * 3] = (rng.next() - 0.5) * 2;
       randomness[i * 3 + 1] = (rng.next() - 0.5) * 2;
       randomness[i * 3 + 2] = (rng.next() - 0.5) * 2;
 
-      const isGolden = rng.next() > 0.7;
+      const isGolden = rng.next() > ORB_CONFIG.essence.colors.golden.threshold;
 
-      colors[i * 3] = isGolden ? 1.0 : 0.98;
-      colors[i * 3 + 1] = isGolden ? 0.85 : 0.98;
-      colors[i * 3 + 2] = isGolden ? 0.5 : 1.0;
+      if (isGolden) {
+        colors[i * 3] = ORB_CONFIG.essence.colors.golden.color[0];
+        colors[i * 3 + 1] = ORB_CONFIG.essence.colors.golden.color[1];
+        colors[i * 3 + 2] = ORB_CONFIG.essence.colors.golden.color[2];
+      } else {
+        colors[i * 3] = ORB_CONFIG.essence.colors.cyan.color[0];
+        colors[i * 3 + 1] = ORB_CONFIG.essence.colors.cyan.color[1];
+        colors[i * 3 + 2] = ORB_CONFIG.essence.colors.cyan.color[2];
+      }
     }
     return { positions, scales, randomness, colors, count };
   }, []);
@@ -90,41 +86,41 @@ export function PolyhedronOrb({
 
   const getSinuousPosition = (progress: number): [number, number, number] => {
     const t = Math.min(1, Math.max(0, progress));
-    const finalX = -3.0;
-    const finalY = 1.3;
-    const finalZ = 3;
+    const [finalX, finalY, finalZ] = ORB_CONFIG.animation.position.end;
 
-    if (t === 0) return [0, 2.0, 0];
+    if (t === 0) return ORB_CONFIG.animation.position.start;
 
     const easeInOutCubic = (x: number): number =>
       x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
     const smoothT = easeInOutCubic(t);
 
-    if (t <= 0.35) {
-      const phase1 = smoothT / easeInOutCubic(0.35);
+    if (t <= ORB_CONFIG.animation.phases.one) {
+      const phase1 = smoothT / easeInOutCubic(ORB_CONFIG.animation.phases.one);
       return [
         -1.8 * phase1,
-        2.0 + Math.sin(phase1 * Math.PI * 0.5) * 0.2,
+        ORB_CONFIG.animation.position.start[1] + Math.sin(phase1 * Math.PI * 0.5) * 0.2,
         -2.0 * phase1,
       ];
     }
-    if (t <= 0.55) {
+    if (t <= ORB_CONFIG.animation.phases.two) {
       const phase2 =
-        (smoothT - easeInOutCubic(0.35)) /
-        (easeInOutCubic(0.55) - easeInOutCubic(0.35));
+        (smoothT - easeInOutCubic(ORB_CONFIG.animation.phases.one)) /
+        (easeInOutCubic(ORB_CONFIG.animation.phases.two) - easeInOutCubic(ORB_CONFIG.animation.phases.one));
       return [
         -1.8 - (finalX - -1.8) * 0.4 * phase2,
-        2.0 +
-          Math.sin(easeInOutCubic(0.35) * Math.PI * 0.5) * 0.2 -
+        ORB_CONFIG.animation.position.start[1] +
+          Math.sin(easeInOutCubic(ORB_CONFIG.animation.phases.one) * Math.PI * 0.5) * 0.2 -
           1.5 * phase2,
         -2.0,
       ];
     }
     const phase3 =
-      (smoothT - easeInOutCubic(0.55)) / (1 - easeInOutCubic(0.55));
+      (smoothT - easeInOutCubic(ORB_CONFIG.animation.phases.two)) /
+      (1 - easeInOutCubic(ORB_CONFIG.animation.phases.two));
     const currentX = -1.8 - (finalX - -1.8) * 0.4;
     const currentY =
-      2.0 + Math.sin(easeInOutCubic(0.35) * Math.PI * 0.5) * 0.2 - 1.5;
+      ORB_CONFIG.animation.position.start[1] +
+      Math.sin(easeInOutCubic(ORB_CONFIG.animation.phases.one) * Math.PI * 0.5) * 0.2 - 1.5;
     return [
       currentX + (finalX - currentX) * phase3,
       currentY + (finalY - currentY) * phase3,
@@ -135,7 +131,7 @@ export function PolyhedronOrb({
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
 
-    let calculatedProgress = manualProgress;
+    let calculatedProgress = 0;
 
     if (scrollRef) {
       const scrollVal = scrollRef.current || 0;
@@ -152,23 +148,21 @@ export function PolyhedronOrb({
     if (groupRef.current) {
       const [x, y, z] = getSinuousPosition(calculatedProgress);
 
-      groupRef.current.position.lerp(new THREE.Vector3(x, y, z), 0.1);
-
-      if (onPositionUpdate) onPositionUpdate([x, y, z]);
+      groupRef.current.position.lerp(new THREE.Vector3(x, y, z), ORB_CONFIG.animation.lerpSpeed);
 
       const easeInOut =
         calculatedProgress < 0.5
           ? 4 * calculatedProgress * calculatedProgress * calculatedProgress
           : 1 - Math.pow(-2 * calculatedProgress + 2, 3) / 2;
-      const targetScale = 1 - easeInOut * 0.3;
+      const targetScale = 1 - easeInOut * ORB_CONFIG.animation.scale.reduction;
 
       groupRef.current.scale.lerp(
         new THREE.Vector3(
-          targetScale * scale,
-          targetScale * scale,
-          targetScale * scale
+          targetScale * ORB_CONFIG.scale,
+          targetScale * ORB_CONFIG.scale,
+          targetScale * ORB_CONFIG.scale
         ),
-        0.1
+        ORB_CONFIG.animation.lerpSpeed
       );
     }
 
@@ -187,18 +181,24 @@ export function PolyhedronOrb({
       essencePointsRef.current.material.uniforms.time.value = time;
     }
     if (innerCoreRef.current) {
-      const pulse = Math.sin(time * 1.5) * 0.15 + 0.85;
-      innerCoreRef.current.scale.setScalar(pulse * 0.3);
+      const pulse = Math.sin(time * ORB_CONFIG.lights.primary.pulseSpeed) * 0.15 + 0.85;
+      innerCoreRef.current.scale.setScalar(pulse * ORB_CONFIG.innerCore.radius);
     }
     if (lightRef.current) {
-      lightRef.current.intensity = 2 + Math.sin(time * 1.2) * 0.8;
+      lightRef.current.intensity =
+        ORB_CONFIG.lights.primary.baseIntensity +
+        Math.sin(time * ORB_CONFIG.lights.primary.pulseSpeed) * ORB_CONFIG.lights.primary.pulseAmplitude;
     }
   });
 
   return (
     <group ref={groupRef}>
       <mesh ref={orbRef}>
-        <sphereGeometry args={[1.5, 64, 64]} />
+        <sphereGeometry args={[
+          ORB_CONFIG.sphere.radius,
+          ORB_CONFIG.sphere.widthSegments,
+          ORB_CONFIG.sphere.heightSegments
+        ]} />
         <shaderMaterial
           ref={hologramRef}
           {...holographicShader}
@@ -228,26 +228,26 @@ export function PolyhedronOrb({
         </bufferGeometry>
       </points>
       <mesh ref={innerCoreRef}>
-        <sphereGeometry args={[0.3, 32, 32]} />
+        <sphereGeometry args={[ORB_CONFIG.innerCore.radius, ORB_CONFIG.innerCore.segments, ORB_CONFIG.innerCore.segments]} />
         <meshBasicMaterial
-          color="#ffd700"
+          color={ORB_CONFIG.innerCore.color}
           transparent
-          opacity={0.2}
+          opacity={ORB_CONFIG.innerCore.opacity}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
       <pointLight
         ref={lightRef}
         position={[0, 0, 0]}
-        color="#a855f7"
-        intensity={1.5}
-        distance={20}
+        color={ORB_CONFIG.lights.primary.color}
+        intensity={ORB_CONFIG.lights.primary.baseIntensity}
+        distance={ORB_CONFIG.lights.primary.distance}
       />
       <pointLight
         position={[0, 0, 0]}
-        color="#ffd700"
-        intensity={1}
-        distance={8}
+        color={ORB_CONFIG.lights.secondary.color}
+        intensity={ORB_CONFIG.lights.secondary.intensity}
+        distance={ORB_CONFIG.lights.secondary.distance}
       />
     </group>
   );

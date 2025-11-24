@@ -1,21 +1,18 @@
 "use client";
 
-import * as THREE from "three";
-import { useMemo, useRef, useLayoutEffect, RefObject } from "react";
-import { SeededRandom } from "@/utils/rng";
-import { useFrame, useThree } from "@react-three/fiber";
-import { onPacketBeforeCompile } from "../shaders/packet";
+import * as THREE from 'three';
+import { useMemo, useRef, useLayoutEffect, RefObject } from 'react';
+import { SeededRandom } from '@/utils/rng';
+import { useFrame, useThree } from '@react-three/fiber';
+import { onPacketBeforeCompile } from '@/lib/shaders/packet';
+import { BLOCKCHAIN_CONFIG } from '@/config/3d';
 
-const NODE_COUNT = 18;
-const CONNECTION_DISTANCE = 14;
-const PACKET_COUNT = 40;
-
-interface Props {
+interface BlockchainNetworkProps {
   scrollRef: RefObject<number>;
   currentSection: number;
 }
 
-export function BlockchainBackground({ scrollRef, currentSection }: Props) {
+export function BlockchainNetwork({ scrollRef, currentSection }: BlockchainNetworkProps) {
   const groupRef = useRef<THREE.Group>(null);
   const nodesRef = useRef<THREE.InstancedMesh>(null);
   const cablesRef = useRef<THREE.InstancedMesh>(null);
@@ -24,23 +21,23 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const { pointer } = useThree();
 
-  const rng = useMemo(() => new SeededRandom(42), []);
+  const rng = useMemo(() => new SeededRandom(BLOCKCHAIN_CONFIG.seed), []);
 
   const { nodes, connections } = useMemo(() => {
     const _nodes = [];
-    for (let i = 0; i < NODE_COUNT; i++) {
+    for (let i = 0; i < BLOCKCHAIN_CONFIG.nodes.count; i++) {
       _nodes.push(
         new THREE.Vector3(
-          (rng.next() - 0.5) * 40,
-          (rng.next() - 0.5) * 30,
-          (rng.next() - 0.5) * 20
+          (rng.next() - 0.5) * BLOCKCHAIN_CONFIG.nodes.distribution.x,
+          (rng.next() - 0.5) * BLOCKCHAIN_CONFIG.nodes.distribution.y,
+          (rng.next() - 0.5) * BLOCKCHAIN_CONFIG.nodes.distribution.z
         )
       );
     }
     const _connections = [];
-    for (let i = 0; i < NODE_COUNT; i++) {
-      for (let j = i + 1; j < NODE_COUNT; j++) {
-        if (_nodes[i].distanceTo(_nodes[j]) < CONNECTION_DISTANCE) {
+    for (let i = 0; i < BLOCKCHAIN_CONFIG.nodes.count; i++) {
+      for (let j = i + 1; j < BLOCKCHAIN_CONFIG.nodes.count; j++) {
+        if (_nodes[i].distanceTo(_nodes[j]) < BLOCKCHAIN_CONFIG.nodes.connectionDistance) {
           _connections.push({ start: _nodes[i], end: _nodes[j] });
         }
       }
@@ -75,11 +72,12 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
   }, [nodes, connections, dummy]);
 
   const initialPackets = useMemo(() => {
-    return Array.from({ length: PACKET_COUNT }).map((_, i) => ({
-      active: i < 15,
+    return Array.from({ length: BLOCKCHAIN_CONFIG.packets.count }).map((_, i) => ({
+      active: i < BLOCKCHAIN_CONFIG.packets.initialActive,
       progress: rng.next(),
       routeIndex: Math.floor(rng.next() * connections.length),
-      speed: 0.5 + rng.next() * 0.5,
+      speed: BLOCKCHAIN_CONFIG.packets.speed.min +
+             rng.next() * (BLOCKCHAIN_CONFIG.packets.speed.max - BLOCKCHAIN_CONFIG.packets.speed.min),
     }));
   }, [rng, connections.length]);
 
@@ -88,24 +86,32 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
   useFrame((_, delta) => {
     if (!groupRef.current || !packetsRef.current) return;
 
-    groupRef.current.rotation.y += 0.0015;
+    groupRef.current.rotation.y += BLOCKCHAIN_CONFIG.animation.rotation;
 
-    const targetRotX = pointer.y * 0.2 || 0;
+    const targetRotX = pointer.y * BLOCKCHAIN_CONFIG.animation.pointerInfluence || 0;
     groupRef.current.rotation.x +=
-      (targetRotX - groupRef.current.rotation.x) * 0.05;
+      (targetRotX - groupRef.current.rotation.x) * BLOCKCHAIN_CONFIG.animation.lerpSpeed;
 
     const scrollProgress = scrollRef.current || 0;
     const targetPos = new THREE.Vector3();
 
     if (currentSection === 0) {
-      targetPos.set(0, -50, -60);
+      targetPos.set(...BLOCKCHAIN_CONFIG.animation.position.hero);
     } else {
       const t = Math.min(1, scrollProgress * 2);
       const ease = t * (2 - t);
       targetPos.set(
         0,
-        THREE.MathUtils.lerp(-50, 0, ease),
-        THREE.MathUtils.lerp(-60, -12, ease)
+        THREE.MathUtils.lerp(
+          BLOCKCHAIN_CONFIG.animation.position.hero[1],
+          BLOCKCHAIN_CONFIG.animation.position.blockchain[1],
+          ease
+        ),
+        THREE.MathUtils.lerp(
+          BLOCKCHAIN_CONFIG.animation.position.hero[2],
+          BLOCKCHAIN_CONFIG.animation.position.blockchain[2],
+          ease
+        )
       );
     }
 
@@ -114,9 +120,9 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
       scrollProgress === 0 &&
       groupRef.current.position.y === 0
     ) {
-      groupRef.current.position.set(0, -50, -60);
+      groupRef.current.position.set(...BLOCKCHAIN_CONFIG.animation.position.hero);
     } else {
-      groupRef.current.position.lerp(targetPos, 0.05);
+      groupRef.current.position.lerp(targetPos, BLOCKCHAIN_CONFIG.animation.lerpSpeed);
     }
 
     const safeDelta = Math.min(delta, 0.05);
@@ -124,11 +130,12 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
 
     packetsData.current.forEach((packet, i) => {
       if (!packet.active) {
-        if (Math.random() < 0.2) {
+        if (Math.random() < BLOCKCHAIN_CONFIG.packets.activationProbability) {
           packet.active = true;
           packet.progress = 0;
           packet.routeIndex = Math.floor(rng.next() * connections.length);
-          packet.speed = 0.5 + rng.next() * 0.5;
+          packet.speed = BLOCKCHAIN_CONFIG.packets.speed.min +
+                        rng.next() * (BLOCKCHAIN_CONFIG.packets.speed.max - BLOCKCHAIN_CONFIG.packets.speed.min);
         } else {
           dummy.scale.set(0, 0, 0);
           dummy.updateMatrix();
@@ -151,7 +158,7 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
         if (route) {
           dummy.position.lerpVectors(route.start, route.end, packet.progress);
           dummy.lookAt(route.end);
-          dummy.scale.set(0.09, 0.09, 0.6);
+          dummy.scale.set(...BLOCKCHAIN_CONFIG.packets.scale);
           dummy.updateMatrix();
           packetsRef.current!.setMatrixAt(i, dummy.matrix);
           dirty = true;
@@ -163,15 +170,19 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
   });
 
   return (
-    <group ref={groupRef} position={[0, -50, -60]}>
-      <instancedMesh ref={nodesRef} args={[undefined, undefined, NODE_COUNT]}>
-        <sphereGeometry args={[0.8, 32, 32]} />
+    <group ref={groupRef} position={BLOCKCHAIN_CONFIG.animation.position.hero}>
+      <instancedMesh ref={nodesRef} args={[undefined, undefined, BLOCKCHAIN_CONFIG.nodes.count]}>
+        <sphereGeometry args={[
+          BLOCKCHAIN_CONFIG.nodes.sphere.radius,
+          BLOCKCHAIN_CONFIG.nodes.sphere.widthSegments,
+          BLOCKCHAIN_CONFIG.nodes.sphere.heightSegments
+        ]} />
         <meshStandardMaterial
-          color="#1e293b"
-          roughness={0.5}
-          metalness={0.8}
-          emissive="#1e1b4b"
-          emissiveIntensity={0.1}
+          color={BLOCKCHAIN_CONFIG.nodes.material.color}
+          roughness={BLOCKCHAIN_CONFIG.nodes.material.roughness}
+          metalness={BLOCKCHAIN_CONFIG.nodes.material.metalness}
+          emissive={BLOCKCHAIN_CONFIG.nodes.material.emissive}
+          emissiveIntensity={BLOCKCHAIN_CONFIG.nodes.material.emissiveIntensity}
         />
       </instancedMesh>
 
@@ -179,23 +190,32 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
         ref={cablesRef}
         args={[undefined, undefined, connections.length]}
       >
-        <cylinderGeometry args={[0.03, 0.03, 1, 4]} />
+        <cylinderGeometry args={[
+          BLOCKCHAIN_CONFIG.cables.cylinder.radiusTop,
+          BLOCKCHAIN_CONFIG.cables.cylinder.radiusBottom,
+          1,
+          BLOCKCHAIN_CONFIG.cables.cylinder.radialSegments
+        ]} />
         <meshBasicMaterial
-          color="#475569"
+          color={BLOCKCHAIN_CONFIG.cables.material.color}
           transparent
-          opacity={0.2}
+          opacity={BLOCKCHAIN_CONFIG.cables.material.opacity}
           blending={THREE.AdditiveBlending}
         />
       </instancedMesh>
 
       <instancedMesh
         ref={packetsRef}
-        args={[undefined, undefined, PACKET_COUNT]}
+        args={[undefined, undefined, BLOCKCHAIN_CONFIG.packets.count]}
         frustumCulled={false}
       >
-        <sphereGeometry args={[0.5, 16, 16]} />
+        <sphereGeometry args={[
+          BLOCKCHAIN_CONFIG.packets.sphere.radius,
+          BLOCKCHAIN_CONFIG.packets.sphere.widthSegments,
+          BLOCKCHAIN_CONFIG.packets.sphere.heightSegments
+        ]} />
         <meshBasicMaterial
-          color="#00eaff"
+          color={BLOCKCHAIN_CONFIG.packets.material.color}
           transparent
           opacity={1}
           blending={THREE.AdditiveBlending}

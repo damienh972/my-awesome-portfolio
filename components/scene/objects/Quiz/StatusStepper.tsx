@@ -1,6 +1,6 @@
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
+import { useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 
 export function StatusStepper({
   currentQuestion,
@@ -29,7 +29,6 @@ export function StatusStepper({
         if (child instanceof THREE.Mesh) {
           const material = child.material;
 
-          // Unique material case
           if (material && !Array.isArray(material)) {
             material.opacity = 0.9 * animState.current.textAlpha;
             material.transparent = true;
@@ -42,11 +41,11 @@ export function StatusStepper({
   return (
     <group ref={groupRef} position={[basePosition[0], basePosition[1], 0]}>
       {Array.from({ length: totalQuestions }).map((_, i) => {
-        let color = "#444444";
+        let color = '#444444';
         if (i < answers.length || answers.length === totalQuestions) {
-          color = answers[i] === correctAnswers[i] ? "#00ff00" : "#ff0000";
+          color = answers[i] === correctAnswers[i] ? '#00ff00' : '#ff0000';
         } else if (i === currentQuestion && answers.length !== totalQuestions) {
-          color = "#ffffff";
+          color = '#ffffff';
         }
 
         return (

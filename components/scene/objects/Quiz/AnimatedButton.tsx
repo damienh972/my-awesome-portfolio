@@ -1,7 +1,7 @@
-import { useRef, useMemo } from "react";
-import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
-import { RoundedBox } from "@react-three/drei";
+import { useRef, useMemo } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { RoundedBox } from '@react-three/drei';
 
 interface AnimatedButtonProps {
   basePosition: [number, number, number];
@@ -39,11 +39,8 @@ export function AnimatedButton({
   isHovered,
 }: AnimatedButtonProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const matRef = useRef<THREE.ShaderMaterial | THREE.MeshStandardMaterial>(
-    null
-  );
+  const matRef = useRef<THREE.ShaderMaterial | THREE.MeshStandardMaterial>(null);
 
-  // Uniforms
   const uniforms = useMemo(() => {
     if (!baseShaderConfig) return null;
     const u = THREE.UniformsUtils.clone(baseShaderConfig.uniforms);
@@ -63,11 +60,7 @@ export function AnimatedButton({
     meshRef.current.position.z = basePosition[2] + animState.current.textZ;
 
     const currentScale = meshRef.current.scale.x;
-    const nextScale = THREE.MathUtils.lerp(
-      currentScale,
-      targetScale,
-      delta * 10
-    );
+    const nextScale = THREE.MathUtils.lerp(currentScale, targetScale, delta * 10);
     meshRef.current.scale.set(nextScale, nextScale, 1);
 
     if (matRef.current) {
