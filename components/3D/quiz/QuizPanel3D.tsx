@@ -30,7 +30,10 @@ const BLOCK_W = PANEL_WIDTH / GRID_COLS;
 const BLOCK_H = PANEL_HEIGHT / GRID_ROWS;
 const BLOCK_D = 0.2;
 
-const SC_ELECTRIC_BLUE = new THREE.Color("#735bac");
+const BUTTON_COLORS = {
+  normal: new THREE.Color("#4617d5"),
+  hover: new THREE.Color("#735bac"),
+};
 const SC_TEXT_COLOR = "#e0f7fa";
 const SC_TEXT_ACTIVE = "#ffffff";
 const FONT_NAME = "Michroma";
@@ -43,8 +46,6 @@ export function QuizPanel3D({
   const groupRef = useRef<THREE.Group>(null);
   const debrisRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
-
-  const movingLightRef = useRef<THREE.PointLight>(null);
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
@@ -77,7 +78,7 @@ export function QuizPanel3D({
       uniforms: {
         time: { value: 0 },
         opacity: { value: 0.0 },
-        baseColor: { value: new THREE.Color(SC_ELECTRIC_BLUE) },
+        baseColor: { value: new THREE.Color(BUTTON_COLORS.normal) },
         hoverState: { value: 0.0 },
       },
       vertexShader: sc2ButtonsVertexShader,
@@ -160,6 +161,7 @@ export function QuizPanel3D({
       );
       groupRef.current.position.x = position[0];
       groupRef.current.position.z = position[2];
+
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
         state.pointer.y * 0.03,
@@ -201,7 +203,7 @@ export function QuizPanel3D({
           (1 - smoothWall) * offset.z
         );
 
-        const scale = THREE.MathUtils.lerp(0, 0.98, smoothWall);
+        const scale = THREE.MathUtils.lerp(0, 1, smoothWall);
         dummy.scale.set(scale, scale, scale);
 
         dummy.updateMatrix();
@@ -209,15 +211,10 @@ export function QuizPanel3D({
       }
       debrisRef.current.instanceMatrix.needsUpdate = true;
     }
-
-    if (movingLightRef.current) {
-      movingLightRef.current.position.x = Math.sin(time * 0.5) * 5;
-      movingLightRef.current.position.y = Math.cos(time * 0.3) * 3;
-      movingLightRef.current.position.z = 4 + Math.sin(time * 0.2);
-    }
   });
 
   const handleAnswer = (idx: number) => {
+    setSelectedAnswers([...selectedAnswers, idx]);
     if (animState.current.textAlpha < 0.5) return;
 
     if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
@@ -228,7 +225,7 @@ export function QuizPanel3D({
           (a, i) => a === QUIZ_QUESTIONS[i].correctAnswer
         ).length;
         setQuizState(score === QUIZ_QUESTIONS.length ? "success" : "failure");
-      }, 300);
+      }, 500);
     }
   };
 
@@ -246,21 +243,6 @@ export function QuizPanel3D({
       position={[position[0], -100, position[2]]}
       scale={0.8}
     >
-      <pointLight
-        position={[0, -2, -2]}
-        intensity={0.4}
-        distance={15}
-        color="#0040ff"
-        decay={2}
-      />
-      <pointLight
-        ref={movingLightRef}
-        intensity={1.5}
-        distance={15}
-        color="#ffffff"
-        decay={2}
-      />
-
       <instancedMesh
         ref={debrisRef}
         args={[undefined, undefined, DEBRIS_COUNT]}
@@ -271,8 +253,8 @@ export function QuizPanel3D({
         <meshStandardMaterial
           color="#1e293b"
           roughness={0.2}
-          metalness={0.9}
-          emissive="#0f172a"
+          metalness={0.8}
+          emissive={"#1b2b52"}
           emissiveIntensity={0.2}
         />
       </instancedMesh>
@@ -302,9 +284,9 @@ export function QuizPanel3D({
               {QUIZ_QUESTIONS[currentQuestion].options.map((option, idx) => (
                 <group key={idx}>
                   <AnimatedButton
-                    basePosition={[0, 0.6 - idx * 0.8, 0]}
+                    basePosition={[0, 0.4 - idx * 0.8, 0]}
                     args={[4.0, 0.55, 0.05]}
-                    baseColor={SC_ELECTRIC_BLUE}
+                    baseColor={BUTTON_COLORS}
                     baseShaderConfig={baseShaderConfig}
                     animState={animState}
                     onClick={() => handleAnswer(idx)}
@@ -315,7 +297,7 @@ export function QuizPanel3D({
 
                   <AnimatedText
                     text={option}
-                    basePosition={[0, 0.6 - idx * 0.8, 0.06]}
+                    basePosition={[0, 0.4 - idx * 0.8, 0.06]}
                     fontSize={0.16}
                     color={
                       hoveredButton === idx ? SC_TEXT_ACTIVE : SC_TEXT_COLOR
@@ -341,11 +323,10 @@ export function QuizPanel3D({
               <AnimatedButton
                 basePosition={[0, -1, 0]}
                 args={[2.5, 0.6, 0.1]}
-                baseColor={SC_ELECTRIC_BLUE}
+                baseColor={BUTTON_COLORS}
                 baseShaderConfig={null}
                 animState={animState}
                 onClick={handleRetry}
-                color="#ffffff"
                 emissive={true}
                 isHovered={false}
               />

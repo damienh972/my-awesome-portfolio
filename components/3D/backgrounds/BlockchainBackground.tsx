@@ -89,7 +89,7 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
     }))
   );
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (!groupRef.current || !packetsRef.current) return;
 
     groupRef.current.rotation.y += 0.0015;
@@ -171,11 +171,11 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
       <instancedMesh ref={nodesRef} args={[undefined, undefined, NODE_COUNT]}>
         <sphereGeometry args={[0.8, 32, 32]} />
         <meshStandardMaterial
-          color="#334155"
-          roughness={0.2}
-          metalness={0.9}
+          color="#1e293b"
+          roughness={0.5}
+          metalness={0.8}
           emissive="#1e1b4b"
-          emissiveIntensity={0.2}
+          emissiveIntensity={0.1}
         />
       </instancedMesh>
 

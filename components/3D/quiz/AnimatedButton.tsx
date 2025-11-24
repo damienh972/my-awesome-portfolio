@@ -3,8 +3,6 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { RoundedBox } from "@react-three/drei";
 
-const SC_HOVER_VIOLET = new THREE.Color("#4617d5");
-
 export function AnimatedButton({
   basePosition,
   args,
@@ -14,10 +12,27 @@ export function AnimatedButton({
   onClick,
   onOver,
   onOut,
-  color,
   emissive,
   isHovered,
-}: any) {
+}: {
+  basePosition: [number, number, number];
+  args: [number, number, number];
+  baseColor: { normal: THREE.Color; hover: THREE.Color };
+  baseShaderConfig: {
+    uniforms: { [uniform: string]: THREE.IUniform<any> };
+    vertexShader: string;
+    fragmentShader: string;
+  } | null;
+  animState: React.RefObject<{
+    textAlpha: number;
+    textZ: number;
+  }>;
+  onClick?: () => void;
+  onOver?: () => void;
+  onOut?: () => void;
+  emissive?: boolean;
+  isHovered: boolean;
+}) {
   const meshRef = useRef<any>(null);
   const matRef = useRef<any>(null);
 
@@ -25,11 +40,11 @@ export function AnimatedButton({
   const uniforms = useMemo(() => {
     if (!baseShaderConfig) return null;
     const u = THREE.UniformsUtils.clone(baseShaderConfig.uniforms);
-    u.baseColor.value = new THREE.Color(baseColor);
+    u.baseColor.value = new THREE.Color(baseColor.normal);
     return u;
   }, [baseShaderConfig]);
 
-  const targetColor = isHovered ? SC_HOVER_VIOLET : baseColor;
+  const targetColor = isHovered ? baseColor.hover : baseColor.normal;
   const targetHoverState = isHovered ? 1.0 : 0.0;
   const targetScale = isHovered ? 1.05 : 1.0;
 
@@ -85,7 +100,7 @@ export function AnimatedButton({
           ref={matRef}
           vertexShader={baseShaderConfig.vertexShader}
           fragmentShader={baseShaderConfig.fragmentShader}
-          uniforms={uniforms}
+          uniforms={uniforms!}
           transparent={true}
           side={THREE.DoubleSide}
           depthWrite={false}
@@ -94,10 +109,10 @@ export function AnimatedButton({
       ) : (
         <meshStandardMaterial
           ref={matRef}
-          color={color}
+          color={baseColor.normal}
           transparent
           opacity={0}
-          emissive={emissive ? color : undefined}
+          emissive={emissive ? baseColor.normal : undefined}
           emissiveIntensity={0.5}
         />
       )}

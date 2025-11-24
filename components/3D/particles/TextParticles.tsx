@@ -42,7 +42,7 @@ export function TextParticles({
     } else {
       setFontLoaded(true);
     }
-  }, []);
+  }, [font]);
 
   /**
    * Generate particles ONCE per text
@@ -165,7 +165,7 @@ export function TextParticles({
     const mouse3D = new THREE.Vector3(
       (mousePosition.x - 0.5) * 2,
       -(mousePosition.y - 0.5) * 2,
-      0.5 // Z fixed
+      0.5
     );
 
     // Convert to NDC space

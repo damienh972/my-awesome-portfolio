@@ -43,23 +43,6 @@ export function ParticleScene({
       }}
     >
       <Suspense fallback={null}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[5, 5, 5]} intensity={1} color="#00d9ff" />
-        <directionalLight
-          position={[-5, -5, -5]}
-          intensity={0.5}
-          color="#b026ff"
-        />
-        <pointLight
-          position={[
-            (mousePosition.x - 0.5) * 10,
-            -(mousePosition.y - 0.5) * 10,
-            5,
-          ]}
-          intensity={isHovered ? 2 : 0.5}
-          color="#00d9ff"
-          distance={10}
-        />
         <TextParticles
           text="Damien Heloise"
           font="Michroma"

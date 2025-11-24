@@ -1,9 +1,9 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Suspense, useMemo, useRef, RefObject, useEffect } from "react";
+import { Suspense, useRef, RefObject, useEffect } from "react";
 import * as THREE from "three";
-import { Preload, Points, PointMaterial } from "@react-three/drei";
+import { Preload, Environment } from "@react-three/drei";
 import { PolyhedronOrb } from "../orb/PolyhedronOrb";
 import { BlockchainBackground } from "./BlockchainBackground";
 import { QuizPanel3D } from "../quiz/QuizPanel3D";
@@ -16,33 +16,6 @@ interface BackgroundProps {
 interface CursorPosition {
   x: number;
   y: number;
-}
-
-function StaticStars() {
-  const ref = useRef<THREE.Points>(null);
-  const sphere = useMemo(() => {
-    const positions = new Float32Array(600 * 3);
-    for (let i = 0; i < 600; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 80;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 80;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
-    }
-    return positions;
-  }, []);
-  return (
-    <group rotation={[0, 0, Math.PI / 4]}>
-      <Points ref={ref} positions={sphere} stride={3} frustumCulled={false}>
-        <PointMaterial
-          transparent
-          color="#446688"
-          size={0.05}
-          sizeAttenuation={true}
-          depthWrite={false}
-          opacity={0.3}
-        />
-      </Points>
-    </group>
-  );
 }
 
 function CameraController({
@@ -105,7 +78,7 @@ function DynamicAmbient({ currentSection }: { currentSection: number }) {
 
 function BlockchainLights({ currentSection }: { currentSection: number }) {
   const groupRef = useRef<THREE.Group>(null);
-  useFrame((state) => {
+  useFrame(() => {
     if (!groupRef.current) return;
     const targetIntensity = currentSection === 1 ? 8 : 0;
     groupRef.current.children.forEach((light) => {
@@ -198,15 +171,14 @@ export function Background({ scrollRef, currentSection }: BackgroundProps) {
           style={{ width: "100%", height: "100%", pointerEvents: "auto" }}
         >
           <Suspense fallback={null}>
+            <Environment preset="night" />
             <DynamicAmbient currentSection={currentSection} />
             <directionalLight
               position={[5, 5, 5]}
-              intensity={0.5}
+              intensity={1.5}
               color="#00d9ff"
             />
             <BlockchainLights currentSection={currentSection} />
-
-            <StaticStars />
 
             <fog
               attach="fog"
@@ -229,7 +201,7 @@ export function Background({ scrollRef, currentSection }: BackgroundProps) {
             />
             <Suspense fallback={null}>
               <QuizPanel3D
-                position={[3.5, 0, -2]}
+                position={[0, -1, -1]}
                 scrollRef={scrollRef}
                 currentSection={currentSection}
               />

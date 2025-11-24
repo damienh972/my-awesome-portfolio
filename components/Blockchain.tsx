@@ -1,28 +1,10 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef } from "react";
 import { Canvas } from "@react-three/fiber";
-import { useScroll } from "framer-motion";
 
 export function Blockchain() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const [scrollValue, setScrollValue] = useState(0);
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-
-  const [quizScrollProgress, setQuizScrollProgress] = useState(0);
-
-  useEffect(() => {
-    const unsubscribe = scrollYProgress.on("change", (value) => {
-      setScrollValue(value);
-      setQuizScrollProgress(value);
-    });
-
-    return () => unsubscribe();
-  }, [scrollYProgress]);
 
   const isInView = true;
 
@@ -49,7 +31,6 @@ export function Blockchain() {
               camera={{ position: [0, 0, 6], fov: 50 }}
               gl={{ alpha: true, antialias: true }}
             >
-              <ambientLight intensity={0.5} />
               <directionalLight
                 position={[5, 5, 5]}
                 intensity={0.8}

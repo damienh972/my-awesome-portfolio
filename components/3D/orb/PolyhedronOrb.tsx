@@ -237,7 +237,7 @@ export function PolyhedronOrb({
       <pointLight
         ref={lightRef}
         position={[0, 0, 0]}
-        color="#8fb3c4"
+        color="#a855f7"
         intensity={3}
         distance={20}
       />

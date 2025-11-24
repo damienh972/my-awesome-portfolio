@@ -25,9 +25,9 @@ export function StatusStepper({
     <group ref={groupRef} position={[basePosition[0], basePosition[1], 0]}>
       {Array.from({ length: totalQuestions }).map((_, i) => {
         let color = "#444444";
-        if (i < currentQuestion) {
+        if (i < answers.length || answers.length === totalQuestions) {
           color = answers[i] === correctAnswers[i] ? "#00ff00" : "#ff0000";
-        } else if (i === currentQuestion) {
+        } else if (i === currentQuestion && answers.length !== totalQuestions) {
           color = "#ffffff";
         }
 
