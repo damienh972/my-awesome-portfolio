@@ -9,14 +9,32 @@ export function StatusStepper({
   correctAnswers,
   basePosition,
   animState,
-}: any) {
+}: {
+  currentQuestion: number;
+  totalQuestions: number;
+  answers: number[];
+  correctAnswers: number[];
+  basePosition: [number, number, number];
+  animState: React.RefObject<{
+    wallProgress: number;
+    textAlpha: number;
+    textZ: number;
+  }>;
+}) {
   const groupRef = useRef<THREE.Group>(null);
   useFrame(() => {
     if (groupRef.current) {
       groupRef.current.position.z = basePosition[2] + animState.current.textZ;
-      groupRef.current.children.forEach((child: any) => {
-        if (child.material)
-          child.material.opacity = 0.9 * animState.current.textAlpha;
+      groupRef.current.children.forEach((child) => {
+        if (child instanceof THREE.Mesh) {
+          const material = child.material;
+
+          // Unique material case
+          if (material && !Array.isArray(material)) {
+            material.opacity = 0.9 * animState.current.textAlpha;
+            material.transparent = true;
+          }
+        }
       });
     }
   });

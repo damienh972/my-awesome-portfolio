@@ -2,6 +2,7 @@
 
 import * as THREE from "three";
 import { useMemo, useRef, useLayoutEffect, RefObject } from "react";
+import { SeededRandom } from "@/utils/rng";
 import { useFrame, useThree } from "@react-three/fiber";
 import { onPacketBeforeCompile } from "../shaders/packet";
 
@@ -14,14 +15,6 @@ interface Props {
   currentSection: number;
 }
 
-function createSeededRandom(seed: number) {
-  let value = seed;
-  return function () {
-    value = (value * 9301 + 49297) % 233280;
-    return value / 233280;
-  };
-}
-
 export function BlockchainBackground({ scrollRef, currentSection }: Props) {
   const groupRef = useRef<THREE.Group>(null);
   const nodesRef = useRef<THREE.InstancedMesh>(null);
@@ -31,15 +24,16 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const { pointer } = useThree();
 
+  const rng = useMemo(() => new SeededRandom(42), []);
+
   const { nodes, connections } = useMemo(() => {
-    const rng = createSeededRandom(42);
     const _nodes = [];
     for (let i = 0; i < NODE_COUNT; i++) {
       _nodes.push(
         new THREE.Vector3(
-          (rng() - 0.5) * 40,
-          (rng() - 0.5) * 30,
-          (rng() - 0.5) * 20
+          (rng.next() - 0.5) * 40,
+          (rng.next() - 0.5) * 30,
+          (rng.next() - 0.5) * 20
         )
       );
     }
@@ -52,7 +46,7 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
       }
     }
     return { nodes: _nodes, connections: _connections };
-  }, []);
+  }, [rng]);
 
   useLayoutEffect(() => {
     if (nodesRef.current) {
@@ -80,14 +74,16 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
     }
   }, [nodes, connections, dummy]);
 
-  const packetsData = useRef(
-    Array.from({ length: PACKET_COUNT }).map((_, i) => ({
+  const initialPackets = useMemo(() => {
+    return Array.from({ length: PACKET_COUNT }).map((_, i) => ({
       active: i < 15,
-      progress: Math.random(),
-      routeIndex: Math.floor(Math.random() * connections.length),
-      speed: 0.5 + Math.random() * 0.5,
-    }))
-  );
+      progress: rng.next(),
+      routeIndex: Math.floor(rng.next() * connections.length),
+      speed: 0.5 + rng.next() * 0.5,
+    }));
+  }, [rng, connections.length]);
+
+  const packetsData = useRef(initialPackets);
 
   useFrame((_, delta) => {
     if (!groupRef.current || !packetsRef.current) return;
@@ -131,8 +127,8 @@ export function BlockchainBackground({ scrollRef, currentSection }: Props) {
         if (Math.random() < 0.2) {
           packet.active = true;
           packet.progress = 0;
-          packet.routeIndex = Math.floor(Math.random() * connections.length);
-          packet.speed = 0.5 + Math.random() * 0.5;
+          packet.routeIndex = Math.floor(rng.next() * connections.length);
+          packet.speed = 0.5 + rng.next() * 0.5;
         } else {
           dummy.scale.set(0, 0, 0);
           dummy.updateMatrix();

@@ -11,6 +11,7 @@ import { QUIZ_QUESTIONS } from "@/const/quiz";
 import { StatusStepper } from "./StatusStepper";
 import { AnimatedText } from "./AnimatedText";
 import { AnimatedButton } from "./AnimatedButton";
+import { SeededRandom } from "@/utils/rng";
 
 interface QuizPanel3DProps {
   position: [number, number, number];
@@ -68,7 +69,8 @@ export function QuizPanel3D({
         .then(() => setFontLoaded(true))
         .catch(() => setFontLoaded(true));
     } else {
-      setFontLoaded(true);
+      const t = setTimeout(() => setFontLoaded(true), 0);
+      return () => clearTimeout(t);
     }
   }, []);
 
@@ -93,6 +95,7 @@ export function QuizPanel3D({
 
   // Grid
   const particlesData = useMemo(() => {
+    const rng = new SeededRandom(42);
     const targets = [];
     const randomOffsets = [];
     for (let i = 0; i < DEBRIS_COUNT; i++) {
@@ -103,9 +106,9 @@ export function QuizPanel3D({
         (GRID_ROWS - 1 - row) * BLOCK_H - PANEL_HEIGHT / 2 + BLOCK_H / 2;
       targets.push({ x: tx, y: ty, z: 0 });
       randomOffsets.push({
-        x: (Math.random() - 0.5) * 12,
-        y: (Math.random() - 0.5) * 12,
-        z: (Math.random() - 0.5) * 8,
+        x: (rng.next() - 0.5) * 12,
+        y: (rng.next() - 0.5) * 12,
+        z: (rng.next() - 0.5) * 8,
       });
     }
     return { targets, randomOffsets };

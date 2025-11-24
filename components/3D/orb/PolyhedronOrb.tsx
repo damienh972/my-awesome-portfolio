@@ -8,6 +8,7 @@ import {
   holographicFragmentShader,
 } from "../shaders/holographic";
 import { essenceVertexShader, essenceFragmentShader } from "../shaders/essence";
+import { SeededRandom } from "@/utils/rng";
 
 interface PolyhedronOrbProps {
   scale?: number;
@@ -45,6 +46,7 @@ export function PolyhedronOrb({
   );
 
   const essenceParticles = useMemo(() => {
+    const rng = new SeededRandom(42);
     const count = 300;
     const positions = new Float32Array(count * 3);
     const scales = new Float32Array(count);
@@ -52,21 +54,21 @@ export function PolyhedronOrb({
     const colors = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i++) {
-      const radius = Math.pow(Math.random(), 1.5) * 1.1;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
+      const radius = Math.pow(rng.next(), 1.5) * 1.1;
+      const theta = rng.next() * Math.PI * 2;
+      const phi = Math.acos(2 * rng.next() - 1);
 
       positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
       positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
       positions[i * 3 + 2] = radius * Math.cos(phi);
 
-      scales[i] = Math.random() * 0.5 + 0.2;
+      scales[i] = rng.next() * 0.5 + 0.2;
 
-      randomness[i * 3] = (Math.random() - 0.5) * 2;
-      randomness[i * 3 + 1] = (Math.random() - 0.5) * 2;
-      randomness[i * 3 + 2] = (Math.random() - 0.5) * 2;
+      randomness[i * 3] = (rng.next() - 0.5) * 2;
+      randomness[i * 3 + 1] = (rng.next() - 0.5) * 2;
+      randomness[i * 3 + 2] = (rng.next() - 0.5) * 2;
 
-      const isGolden = Math.random() > 0.7;
+      const isGolden = rng.next() > 0.7;
 
       colors[i * 3] = isGolden ? 1.0 : 0.98;
       colors[i * 3 + 1] = isGolden ? 0.85 : 0.98;
@@ -189,7 +191,7 @@ export function PolyhedronOrb({
       innerCoreRef.current.scale.setScalar(pulse * 0.3);
     }
     if (lightRef.current) {
-      lightRef.current.intensity = 3 + Math.sin(time * 1.2) * 0.8;
+      lightRef.current.intensity = 2 + Math.sin(time * 1.2) * 0.8;
     }
   });
 
@@ -230,7 +232,7 @@ export function PolyhedronOrb({
         <meshBasicMaterial
           color="#ffd700"
           transparent
-          opacity={0.8}
+          opacity={0.2}
           blending={THREE.AdditiveBlending}
         />
       </mesh>
@@ -238,13 +240,13 @@ export function PolyhedronOrb({
         ref={lightRef}
         position={[0, 0, 0]}
         color="#a855f7"
-        intensity={3}
+        intensity={1.5}
         distance={20}
       />
       <pointLight
         position={[0, 0, 0]}
         color="#ffd700"
-        intensity={1.5}
+        intensity={1}
         distance={8}
       />
     </group>

@@ -3,6 +3,7 @@
 import { useRef, useMemo, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { SeededRandom } from "@/utils/rng";
 
 interface TextParticlesProps {
   text: string;
@@ -26,7 +27,10 @@ export function TextParticles({
     velocities: Float32Array;
     dispersedTimes: Float32Array; // -1 = never dispersed, else time of dispersion
   } | null>(null);
+
   const [fontLoaded, setFontLoaded] = useState(false);
+
+  const rng = useMemo(() => new SeededRandom(42), []);
 
   // Load Michroma font
   useEffect(() => {
@@ -39,8 +43,6 @@ export function TextParticles({
         .catch(() => {
           setFontLoaded(true);
         });
-    } else {
-      setFontLoaded(true);
     }
   }, [font]);
 
@@ -122,9 +124,9 @@ export function TextParticles({
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
 
-      positions[i3] = (Math.random() - 0.5) * 40;
-      positions[i3 + 1] = (Math.random() - 0.5) * 40;
-      positions[i3 + 2] = (Math.random() - 0.5) * 40;
+      positions[i3] = (rng.next() - 0.5) * 40;
+      positions[i3 + 1] = (rng.next() - 0.5) * 40;
+      positions[i3 + 2] = (rng.next() - 0.5) * 40;
 
       dispersedTimes[i] = -1; // -1 = never dispersed
     }
@@ -137,7 +139,7 @@ export function TextParticles({
       colors: new Float32Array(sampledColors),
       count,
     };
-  }, [text, fontLoaded]);
+  }, [text, fontLoaded, font, rng]);
 
   /**
    * Store particles data in ref for access in useFrame
@@ -207,12 +209,12 @@ export function TextParticles({
       if (isHovered && distToMouse < dispersionRadius) {
         if (dispersedTimes[i] < 0) {
           // First time dispersion
-          const angle = Math.random() * Math.PI * 2;
-          const force = 0.3 + Math.random() * 0.2;
+          const angle = rng.next() * Math.PI * 2;
+          const force = 0.3 + rng.next() * 0.2;
 
           velocities[i3] = Math.cos(angle) * force;
           velocities[i3 + 1] = Math.sin(angle) * force;
-          velocities[i3 + 2] = (Math.random() - 0.5) * force * 0.5;
+          velocities[i3 + 2] = (rng.next() - 0.5) * force * 0.5;
 
           dispersedTimes[i] = time;
         } else {

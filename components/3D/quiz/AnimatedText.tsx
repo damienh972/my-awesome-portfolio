@@ -5,6 +5,12 @@ import { Text } from "@react-three/drei";
 
 const FONT_URL = "/fonts/michroma/Michroma-Regular.ttf";
 
+type TroikaText = THREE.Mesh & {
+  fillOpacity: number;
+  text: string;
+  fontSize: number;
+};
+
 export function AnimatedText({
   text,
   basePosition,
@@ -12,11 +18,22 @@ export function AnimatedText({
   color,
   animState,
   isHovered,
-}: any) {
-  const textRef = useRef<any>(null);
+}: {
+  text: string;
+  basePosition: [number, number, number];
+  fontSize: number;
+  color: string;
+  animState: React.RefObject<{
+    wallProgress: number;
+    textAlpha: number;
+    textZ: number;
+  }>;
+  isHovered: boolean;
+}) {
+  const textRef = useRef<TroikaText>(null);
   const targetScale = isHovered ? 1.05 : 1.0;
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (textRef.current) {
       const opacity = animState.current.textAlpha;
       textRef.current.visible = opacity > 0.01;
